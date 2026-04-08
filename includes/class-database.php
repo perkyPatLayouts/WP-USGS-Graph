@@ -299,8 +299,8 @@ class USGS_Water_Levels_Database {
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->query(
 			"INSERT INTO $table (graph_id, measurement_date, water_level)
-			VALUES $values_string
-			ON DUPLICATE KEY UPDATE water_level = VALUES(water_level)"
+			VALUES $values_string AS new_vals
+			ON DUPLICATE KEY UPDATE water_level = new_vals.water_level"
 		);
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 

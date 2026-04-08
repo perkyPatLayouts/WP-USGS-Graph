@@ -278,7 +278,10 @@ class USGS_Water_Levels_Database {
 			return false;
 		}
 
-		$values = array();
+		$success_count = 0;
+		$error_count   = 0;
+
+		// Insert measurements one at a time for SQLite compatibility.
 		foreach ( $measurements as $measurement ) {
 			if ( ! isset( $measurement['date'] ) || ! isset( $measurement['value'] ) ) {
 				continue;
@@ -287,24 +290,45 @@ class USGS_Water_Levels_Database {
 			$date  = sanitize_text_field( $measurement['date'] );
 			$value = floatval( $measurement['value'] );
 
-			$values[] = $wpdb->prepare( '(%d, %s, %f)', $graph_id, $date, $value );
+			// Try to insert the measurement.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$result = $wpdb->insert(
+				$table,
+				array(
+					'graph_id'         => $graph_id,
+					'measurement_date' => $date,
+					'water_level'      => $value,
+				),
+				array( '%d', '%s', '%f' )
+			);
+
+			if ( false === $result ) {
+				// Insert failed, likely due to duplicate key constraint.
+				// Try to update the existing record instead.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$update_result = $wpdb->update(
+					$table,
+					array( 'water_level' => $value ),
+					array(
+						'graph_id'         => $graph_id,
+						'measurement_date' => $date,
+					),
+					array( '%f' ),
+					array( '%d', '%s' )
+				);
+
+				if ( false !== $update_result ) {
+					++$success_count;
+				} else {
+					++$error_count;
+				}
+			} else {
+				++$success_count;
+			}
 		}
 
-		if ( empty( $values ) ) {
-			return false;
-		}
-
-		$values_string = implode( ', ', $values );
-
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$result = $wpdb->query(
-			"INSERT INTO $table (graph_id, measurement_date, water_level)
-			VALUES $values_string AS new_vals
-			ON DUPLICATE KEY UPDATE water_level = new_vals.water_level"
-		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-
-		return false !== $result;
+		// Return true if at least some measurements were saved successfully.
+		return $success_count > 0;
 	}
 
 	/**

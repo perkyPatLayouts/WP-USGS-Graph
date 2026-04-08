@@ -4,7 +4,7 @@ Tags: usgs, water, monitoring, charts, graphs, gutenberg
 Requires at least: 6.0
 Tested up to: 6.4
 Requires PHP: 8.0
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,6 +69,15 @@ By default, the plugin keeps the last 2 years of data. Older measurements are au
 4. Frontend display of water level chart
 
 == Changelog ==
+
+= 1.1.0 =
+* CRITICAL UPDATE: Migrated to new USGS OGC API (api.waterdata.usgs.gov)
+* Fixed: Scraping now works with current USGS infrastructure
+* Complete rewrite of scraper to use JSON API instead of HTML parsing
+* Improved error messages and debugging
+* Added CHANGELOG.md and troubleshooting guide
+* Increased API timeout for better reliability
+* Better URL parsing and validation
 
 = 1.0.0 =
 * Initial release

@@ -1,0 +1,61 @@
+# Changelog
+
+All notable changes to the USGS Water Levels plugin will be documented in this file.
+
+## [1.1.0] - 2026-04-08
+
+### 🔥 CRITICAL UPDATE - USGS API Migration
+
+**BREAKING CHANGE:** USGS decommissioned their legacy HTML-based data delivery in Fall 2025. This update migrates to the new OGC API.
+
+### Changed
+
+- **Complete rewrite of scraper** to use new USGS OGC API (`api.waterdata.usgs.gov`)
+- Switched from HTML parsing to JSON API consumption
+- API endpoint: `https://api.waterdata.usgs.gov/ogcapi/v0/collections/field-measurements/items`
+- Improved error messages to explain API changes
+- Increased timeout from 30 to 60 seconds for API requests
+- Better handling of monitoring location IDs (with or without USGS- prefix)
+
+### Added
+
+- Support for multiple groundwater parameter codes (62610, 62611, 72019, 72020, 72150)
+- Automatic deduplication of measurements by date
+- Better URL parsing to handle fragments (#) and query strings (?)
+- TROUBLESHOOTING-SCRAPE-FAILURE.md - comprehensive debugging guide
+- CHANGELOG.md - this file
+
+### Fixed
+
+- **Fixed:** Scraping now works with current USGS infrastructure
+- **Fixed:** URL parsing handles various USGS URL formats
+- **Fixed:** Better error messages when no data is available
+
+### Migration Notes
+
+**If you're experiencing "Last scrape failed" errors:**
+
+1. **Update to version 1.1.0** - The old scraper no longer works
+2. **Your URLs are still valid** - No need to change monitoring location URLs
+3. **Test scraping** - Click "Scrape Now" to verify it works
+4. **Check logs** - Enable WP_DEBUG if issues persist
+
+**Technical Details:**
+
+- Old method: HTML scraping from waterdata.usgs.gov
+- New method: JSON API from api.waterdata.usgs.gov
+- Data format: GeoJSON FeatureCollection
+- Authentication: None required (public API)
+
+## [1.0.0] - 2026-04-08
+
+### Initial Release
+
+- Complete WordPress plugin for USGS water level monitoring
+- Gutenberg block with Chart.js visualization
+- WP-Cron scheduled data scraping
+- Admin interface for graph management
+- REST API for block editor
+- Comprehensive documentation
+- No build process required - shared hosting compatible
+- 22 files, 6,012+ lines of code

@@ -2,6 +2,9 @@
 /**
  * USGS Data Scraper for USGS Water Levels plugin.
  *
+ * Updated to use the new USGS OGC API (api.waterdata.usgs.gov)
+ * instead of HTML scraping.
+ *
  * @package USGS_Water_Levels
  */
 
@@ -11,9 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Scraper class for fetching and parsing USGS water monitoring data.
+ * Scraper class for fetching USGS water monitoring data via the new OGC API.
  */
 class USGS_Water_Levels_Scraper {
+
+	/**
+	 * USGS API endpoint for field measurements.
+	 */
+	const API_ENDPOINT = 'https://api.waterdata.usgs.gov/ogcapi/v0/collections/field-measurements/items';
 
 	/**
 	 * Fetch and parse USGS data from a monitoring location URL.
@@ -26,11 +34,30 @@ class USGS_Water_Levels_Scraper {
 			return new WP_Error( 'invalid_url', __( 'Invalid USGS URL provided.', 'usgs-water-levels' ) );
 		}
 
-		// Fetch the page content.
-		$response = wp_remote_get(
-			$url,
+		// Extract site ID from URL.
+		$site_id = self::extract_site_id( $url );
+		if ( ! $site_id ) {
+			return new WP_Error(
+				'invalid_url',
+				__( 'Could not extract monitoring location ID from URL. Expected format: https://waterdata.usgs.gov/monitoring-location/USGS-XXXXXXXXX/', 'usgs-water-levels' )
+			);
+		}
+
+		// Build API URL.
+		$api_url = add_query_arg(
 			array(
-				'timeout'    => 30,
+				'f'                       => 'json',
+				'monitoring_location_id'  => $site_id,
+				'limit'                   => 10000, // Get max number of measurements.
+			),
+			self::API_ENDPOINT
+		);
+
+		// Fetch data from API.
+		$response = wp_remote_get(
+			$api_url,
+			array(
+				'timeout'    => 60,
 				'user-agent' => 'WordPress USGS Water Levels Plugin/' . USGS_WATER_LEVELS_VERSION,
 			)
 		);
@@ -51,81 +78,31 @@ class USGS_Water_Levels_Scraper {
 			);
 		}
 
-		$html = wp_remote_retrieve_body( $response );
-		if ( empty( $html ) ) {
-			return new WP_Error( 'empty_response', __( 'Empty response from USGS server.', 'usgs-water-levels' ) );
+		$body = wp_remote_retrieve_body( $response );
+		if ( empty( $body ) ) {
+			return new WP_Error( 'empty_response', __( 'Empty response from USGS API.', 'usgs-water-levels' ) );
 		}
 
-		// Parse the HTML.
-		$measurements = self::parse_html( $html );
+		// Parse JSON response.
+		$data = json_decode( $body, true );
+		if ( json_last_error() !== JSON_ERROR_NONE ) {
+			return new WP_Error(
+				'json_error',
+				sprintf(
+					/* translators: %s: JSON error message */
+					__( 'Failed to parse JSON response: %s', 'usgs-water-levels' ),
+					json_last_error_msg()
+				)
+			);
+		}
+
+		// Extract measurements from API response.
+		$measurements = self::parse_api_response( $data );
 
 		if ( empty( $measurements ) ) {
-			return new WP_Error( 'no_data', __( 'No measurement data found in USGS page.', 'usgs-water-levels' ) );
-		}
-
-		return $measurements;
-	}
-
-	/**
-	 * Parse HTML to extract measurement data.
-	 *
-	 * @param string $html HTML content.
-	 * @return array Array of measurements with 'date' and 'value' keys.
-	 */
-	private static function parse_html( $html ) {
-		// Suppress warnings from malformed HTML.
-		libxml_use_internal_errors( true );
-
-		$dom = new DOMDocument();
-		$dom->loadHTML( $html );
-
-		libxml_clear_errors();
-
-		$xpath = new DOMXPath( $dom );
-
-		// Find the table with class "usa-table paginated-table".
-		$tables = $xpath->query( "//table[contains(@class, 'usa-table') and contains(@class, 'paginated-table')]" );
-
-		if ( 0 === $tables->length ) {
-			return array();
-		}
-
-		$table        = $tables->item( 0 );
-		$measurements = array();
-
-		// Find all table rows in tbody.
-		$rows = $xpath->query( './/tbody/tr', $table );
-
-		foreach ( $rows as $row ) {
-			$cells = $xpath->query( './/td', $row );
-
-			if ( $cells->length < 2 ) {
-				continue;
-			}
-
-			// First cell typically contains the date.
-			$date_cell = $cells->item( 0 );
-			$date_text = trim( $date_cell->textContent );
-
-			// Second cell typically contains the water level measurement.
-			$value_cell = $cells->item( 1 );
-			$value_text = trim( $value_cell->textContent );
-
-			// Parse date (format: MM-DD-YYYY or similar).
-			$parsed_date = self::parse_date( $date_text );
-			if ( ! $parsed_date ) {
-				continue;
-			}
-
-			// Parse value (extract numeric value, remove units).
-			$parsed_value = self::parse_value( $value_text );
-			if ( false === $parsed_value ) {
-				continue;
-			}
-
-			$measurements[] = array(
-				'date'  => $parsed_date,
-				'value' => $parsed_value,
+			return new WP_Error(
+				'no_data',
+				__( 'No water level measurements found for this monitoring location. The site may not have groundwater level data, or there may be no recent measurements.', 'usgs-water-levels' )
 			);
 		}
 
@@ -133,20 +110,103 @@ class USGS_Water_Levels_Scraper {
 	}
 
 	/**
-	 * Parse date string to Y-m-d format.
+	 * Extract site ID from USGS monitoring location URL.
 	 *
-	 * @param string $date_string Date string from USGS page.
+	 * @param string $url USGS monitoring location URL.
+	 * @return string|false Site ID (e.g., "USGS-410858072171501") or false on failure.
+	 */
+	private static function extract_site_id( $url ) {
+		// Remove URL fragment (#...) and query string (?...).
+		$url = preg_replace( '/#.*$/', '', $url );
+		$url = preg_replace( '/\?.*$/', '', $url );
+
+		// Match pattern: /monitoring-location/USGS-XXXXXXXXX or /USGS-XXXXXXXXX/.
+		if ( preg_match( '/USGS-\d+/', $url, $matches ) ) {
+			return $matches[0];
+		}
+
+		// Try to match just the number and prepend USGS-.
+		if ( preg_match( '/(\d{10,})/', $url, $matches ) ) {
+			return 'USGS-' . $matches[1];
+		}
+
+		return false;
+	}
+
+	/**
+	 * Parse API response to extract water level measurements.
+	 *
+	 * @param array $data Decoded JSON response from USGS API.
+	 * @return array Array of measurements with 'date' and 'value' keys.
+	 */
+	private static function parse_api_response( $data ) {
+		if ( empty( $data['features'] ) || ! is_array( $data['features'] ) ) {
+			return array();
+		}
+
+		$measurements = array();
+
+		foreach ( $data['features'] as $feature ) {
+			if ( empty( $feature['properties'] ) ) {
+				continue;
+			}
+
+			$props = $feature['properties'];
+
+			// Skip if missing required fields.
+			if ( empty( $props['time'] ) || empty( $props['value'] ) ) {
+				continue;
+			}
+
+			// Parameter codes for groundwater levels:
+			// 62610 = Depth to water level, feet below land surface
+			// 62611 = Depth to water level, feet below land surface, NAVD88
+			// 72019 = Depth to water level, feet below land surface, NGVD29
+			// 72020 = Groundwater level above NGVD29, feet
+			// We'll accept all groundwater-related measurements.
+			$param_code = isset( $props['parameter_code'] ) ? $props['parameter_code'] : '';
+			$is_gw_level = in_array(
+				$param_code,
+				array( '62610', '62611', '72019', '72020', '72150' ),
+				true
+			);
+
+			// Skip non-groundwater measurements.
+			if ( ! $is_gw_level && ! empty( $param_code ) ) {
+				continue;
+			}
+
+			// Parse date from ISO 8601 timestamp.
+			$date = self::parse_date( $props['time'] );
+			if ( ! $date ) {
+				continue;
+			}
+
+			// Parse value.
+			$value = self::parse_value( $props['value'] );
+			if ( false === $value ) {
+				continue;
+			}
+
+			$measurements[] = array(
+				'date'  => $date,
+				'value' => $value,
+			);
+		}
+
+		// Remove duplicates and sort by date.
+		$measurements = self::deduplicate_measurements( $measurements );
+
+		return $measurements;
+	}
+
+	/**
+	 * Parse ISO 8601 date string to Y-m-d format.
+	 *
+	 * @param string $date_string ISO 8601 date string (e.g., "2023-09-21T17:02:00+00:00").
 	 * @return string|false Formatted date string or false on failure.
 	 */
 	private static function parse_date( $date_string ) {
-		// Remove extra whitespace.
-		$date_string = trim( $date_string );
-
-		if ( empty( $date_string ) ) {
-			return false;
-		}
-
-		// Try to parse various date formats.
 		$timestamp = strtotime( $date_string );
 
 		if ( false === $timestamp ) {
@@ -159,27 +219,42 @@ class USGS_Water_Levels_Scraper {
 	/**
 	 * Parse measurement value to extract numeric water level.
 	 *
-	 * @param string $value_string Value string from USGS page.
+	 * @param string|float $value_string Value from API.
 	 * @return float|false Numeric value or false on failure.
 	 */
 	private static function parse_value( $value_string ) {
-		// Remove extra whitespace.
-		$value_string = trim( $value_string );
-
-		if ( empty( $value_string ) ) {
-			return false;
+		if ( is_numeric( $value_string ) ) {
+			return floatval( $value_string );
 		}
 
-		// Extract numeric value (handle negative numbers and decimals).
-		preg_match( '/-?\d+\.?\d*/', $value_string, $matches );
-
-		if ( empty( $matches ) ) {
-			return false;
+		// Extract numeric value from string.
+		if ( preg_match( '/-?\d+\.?\d*/', $value_string, $matches ) ) {
+			return floatval( $matches[0] );
 		}
 
-		$value = floatval( $matches[0] );
+		return false;
+	}
 
-		return $value;
+	/**
+	 * Remove duplicate measurements (same date) keeping the most recent.
+	 *
+	 * @param array $measurements Array of measurements.
+	 * @return array Deduplicated measurements sorted by date.
+	 */
+	private static function deduplicate_measurements( $measurements ) {
+		$unique = array();
+
+		foreach ( $measurements as $measurement ) {
+			$date = $measurement['date'];
+
+			// Keep only one measurement per date (last one wins).
+			$unique[ $date ] = $measurement;
+		}
+
+		// Sort by date ascending.
+		ksort( $unique );
+
+		return array_values( $unique );
 	}
 
 	/**

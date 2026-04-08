@@ -4,7 +4,7 @@ Tags: usgs, water, monitoring, charts, graphs, gutenberg
 Requires at least: 6.0
 Tested up to: 6.4
 Requires PHP: 8.0
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,6 +69,12 @@ By default, the plugin keeps the last 2 years of data. Older measurements are au
 4. Frontend display of water level chart
 
 == Changelog ==
+
+= 1.1.2 =
+* Fixed: SQLite compatibility in save_measurements() function
+* Fixed: Works with WordPress SQLite Database Integration plugin
+* Changed from bulk INSERT to individual INSERT/UPDATE operations
+* Improved: Better error handling and success tracking
 
 = 1.1.1 =
 * Fixed: MySQL 8.0.20+ compatibility issue in save_measurements()

@@ -2,6 +2,29 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [1.1.2] - 2026-04-08
+
+### Fixed
+
+- **Fixed:** SQLite compatibility in `save_measurements()` function
+- Changed from bulk INSERT with ON DUPLICATE KEY UPDATE to individual INSERT/UPDATE operations
+- Now works with WordPress SQLite Database Integration plugin
+- Uses WordPress database abstraction layer (wpdb->insert/update) for compatibility
+
+### Technical Details
+
+**Problem:** The bulk INSERT with ON DUPLICATE KEY UPDATE syntax wasn't translating properly through the WordPress SQLite integration layer, causing "Failed to save measurements to database" errors.
+
+**Solution:** Rewrote `save_measurements()` to:
+- Insert measurements individually using `wpdb->insert()`
+- Fall back to `wpdb->update()` if INSERT fails due to duplicate key
+- Track success/error counts for better reliability
+- Return true if at least some measurements were saved
+
+**Performance:** Slightly slower than bulk insert, but ensures compatibility with both MySQL and SQLite.
+
+**Affected file:** `includes/class-database.php`
+
 ## [1.1.1] - 2026-04-08
 
 ### Fixed

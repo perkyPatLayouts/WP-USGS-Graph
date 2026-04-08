@@ -1,0 +1,28 @@
+/**
+ * Admin styles for USGS Water Levels plugin.
+ */
+
+.usgs-water-levels-chart-wrapper {
+	margin: 20px 0;
+}
+
+.usgs-water-levels-error {
+	padding: 15px;
+	background-color: #f8d7da;
+	border: 1px solid #f5c2c7;
+	border-radius: 4px;
+	color: #842029;
+}
+
+/* Settings page styles */
+.wp-list-table .button-small {
+	padding: 0 8px;
+	height: 26px;
+	line-height: 24px;
+	font-size: 12px;
+}
+
+.wp-list-table .dashicons {
+	vertical-align: middle;
+	margin-right: 3px;
+}

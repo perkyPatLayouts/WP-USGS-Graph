@@ -1,0 +1,31 @@
+/**
+ * Block styles for USGS Water Level Graph.
+ */
+
+.wp-block-usgs-water-levels-water-level-graph {
+	margin: 2em 0;
+}
+
+.usgs-water-levels-chart-wrapper {
+	position: relative;
+	width: 100%;
+}
+
+.usgs-water-levels-chart-wrapper canvas {
+	max-width: 100%;
+	height: auto;
+}
+
+.usgs-water-levels-error {
+	padding: 1em;
+	background-color: #f8d7da;
+	border: 1px solid #f5c2c7;
+	border-radius: 4px;
+	color: #842029;
+	text-align: center;
+}
+
+/* Editor preview styles */
+.usgs-water-levels-chart-preview {
+	min-height: 200px;
+}

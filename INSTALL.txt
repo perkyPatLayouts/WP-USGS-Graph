@@ -1,0 +1,152 @@
+================================================================================
+USGS WATER LEVELS - INSTALLATION INSTRUCTIONS
+================================================================================
+
+REQUIREMENTS:
+- WordPress 6.0+
+- PHP 8.0+
+- MySQL 5.7+
+- NO Node.js or npm required!
+
+================================================================================
+QUICK INSTALL (Shared Hosting)
+================================================================================
+
+1. UPLOAD PLUGIN
+   - Upload the entire 'usgs-water-levels' folder to:
+     wp-content/plugins/usgs-water-levels/
+
+   - OR create a zip and upload via WordPress admin:
+     Plugins → Add New → Upload Plugin
+
+2. ACTIVATE
+   - Go to: Plugins → Installed Plugins
+   - Find "USGS Water Levels"
+   - Click "Activate"
+
+3. VERIFY CHART.JS IS PRESENT
+   - Check that this file exists:
+     wp-content/plugins/usgs-water-levels/assets/js/chart.min.js
+
+   - Should be approximately 200KB
+
+   - If missing, download it manually:
+     https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js
+
+   - Save to: wp-content/plugins/usgs-water-levels/assets/js/chart.min.js
+
+4. CONFIGURE FIRST GRAPH
+   - Go to: USGS Water Levels (in admin menu)
+   - Click "Add New Graph"
+   - Enter:
+     * Title: "My Water Level"
+     * USGS URL: https://waterdata.usgs.gov/monitoring-location/USGS-XXXXXXXXX/
+     * Scrape Interval: 24 hours
+     * Check "Enable scraping"
+   - Click "Add Graph"
+
+5. TEST SCRAPING
+   - Click "Scrape Now" button
+   - Wait a moment
+   - Status should show green checkmark
+   - If red, check the error message
+
+6. INSERT BLOCK
+   - Edit any post/page
+   - Add block → Search "USGS Water Level Graph"
+   - Select your graph from dropdown
+   - Customize colors/width
+   - Publish!
+
+7. DONE!
+   View your post to see the interactive water level chart.
+
+================================================================================
+INSTALLATION VIA WP-CLI
+================================================================================
+
+# Copy plugin to plugins directory
+cp -r usgs-water-levels /path/to/wordpress/wp-content/plugins/
+
+# Activate
+wp plugin activate usgs-water-levels
+
+# Verify Chart.js
+ls -lh wp-content/plugins/usgs-water-levels/assets/js/chart.min.js
+
+# That's it!
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+CHARTS NOT SHOWING?
+- Check browser console (F12) for errors
+- Verify Chart.js file exists (see step 3 above)
+- Ensure block has a graph selected
+- Verify graph has data (click "Scrape Now")
+
+NO DATA AFTER SCRAPING?
+- Verify USGS URL works in browser
+- Check scrape log on admin page
+- Enable WP_DEBUG in wp-config.php
+- Check wp-content/debug.log
+
+WP-CRON NOT RUNNING?
+- Some hosts disable WP-Cron
+- Add to server crontab:
+  */15 * * * * wget -q -O - https://yoursite.com/wp-cron.php?doing_wp_cron
+- Or manually click "Scrape Now" when needed
+
+PERMISSION ERRORS?
+- Set correct file permissions:
+  chmod -R 755 wp-content/plugins/usgs-water-levels
+  chown -R www-data:www-data wp-content/plugins/usgs-water-levels
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+✓ NO BUILD PROCESS REQUIRED
+  This plugin works immediately after upload. No compilation needed!
+
+✓ CHART.JS INCLUDED
+  The Chart.js library (~200KB) is included in the plugin.
+  No CDN dependencies.
+
+✓ SHARED HOSTING FRIENDLY
+  Designed specifically for shared hosting environments.
+  No special server requirements.
+
+✓ WORKS OUT OF THE BOX
+  Just upload, activate, and configure. That's it!
+
+================================================================================
+GETTING USGS URLS
+================================================================================
+
+1. Visit: https://waterdata.usgs.gov/
+2. Search for a monitoring location (by state, county, or site number)
+3. Click on a monitoring location
+4. Copy the full URL from your browser
+5. Use that URL in the plugin settings
+
+Example URL format:
+https://waterdata.usgs.gov/monitoring-location/USGS-410858072171501/
+
+================================================================================
+SUPPORT
+================================================================================
+
+Documentation:
+- README.md - Full documentation
+- SETUP.md - Detailed setup guide
+- WordPress Plugin Handbook: https://developer.wordpress.org/plugins/
+
+USGS Data:
+- https://waterdata.usgs.gov/
+
+Chart.js:
+- https://www.chartjs.org/
+
+================================================================================

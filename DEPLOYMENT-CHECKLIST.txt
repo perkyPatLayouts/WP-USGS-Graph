@@ -1,0 +1,119 @@
+================================================================================
+USGS WATER LEVELS - DEPLOYMENT CHECKLIST FOR SHARED HOSTING
+================================================================================
+
+PRE-DEPLOYMENT CHECKLIST:
+□ All files present in usgs-water-levels folder
+□ Chart.js exists at assets/js/chart.min.js (~200KB)
+□ No node_modules folder (not needed!)
+□ No package.json (not needed!)
+□ File permissions correct (755 for directories, 644 for files)
+
+FILE VERIFICATION:
+□ usgs-water-levels.php (main plugin file)
+□ uninstall.php
+□ readme.txt
+□ includes/class-database.php
+□ includes/class-scraper.php
+□ includes/class-cron.php
+□ includes/class-settings.php
+□ includes/class-rest-api.php
+□ blocks/water-level-graph/block.json
+□ blocks/water-level-graph/index.js (vanilla JavaScript - no build needed)
+□ blocks/water-level-graph/view.js
+□ blocks/water-level-graph/style.css
+□ assets/js/chart.min.js (~200KB)
+□ admin/admin.css
+
+DEPLOYMENT STEPS:
+□ 1. Upload plugin folder to wp-content/plugins/
+□ 2. Activate via WordPress admin or WP-CLI
+□ 3. Go to USGS Water Levels in admin menu
+□ 4. Add first graph configuration
+□ 5. Test "Scrape Now" button
+□ 6. Insert block in a test post
+□ 7. Verify chart displays on frontend
+□ 8. Check WP-Cron is working (or set up server cron)
+
+POST-DEPLOYMENT TESTING:
+□ Admin page loads without errors
+□ Can add/edit/delete graphs
+□ Manual scraping works ("Scrape Now" button)
+□ Block appears in block inserter
+□ Block shows graph selector
+□ Color pickers work in block settings
+□ Frontend displays charts correctly
+□ Charts are interactive (hover shows tooltips)
+□ Responsive on mobile devices
+
+DATABASE VERIFICATION:
+□ Table wp_usgs_wl_graphs created
+□ Table wp_usgs_wl_measurements created
+□ Can insert graph configuration
+□ Can store measurement data
+
+CRON VERIFICATION:
+□ WP-Cron scheduled event created
+□ Event: usgs_water_levels_scrape_cron
+□ Run: wp cron event list | grep usgs
+□ If WP-Cron disabled, set up server cron
+
+TROUBLESHOOTING IF ISSUES:
+□ Enable WP_DEBUG in wp-config.php
+□ Check wp-content/debug.log for errors
+□ Verify Chart.js file exists and is ~200KB
+□ Check browser console for JavaScript errors
+□ Test USGS URL in browser manually
+□ Verify file permissions are correct
+
+PERFORMANCE CHECK:
+□ Page load time acceptable
+□ Charts render smoothly
+□ No console errors
+□ Database queries efficient
+
+SECURITY CHECK:
+□ Only admins can access settings page
+□ Forms have nonce protection
+□ SQL uses prepared statements
+□ User input is sanitized
+□ Output is escaped
+
+SUCCESS INDICATORS:
+✓ Plugin activated without errors
+✓ Admin page accessible
+✓ Can add graphs successfully
+✓ Scraping retrieves data
+✓ Block inserts and displays
+✓ Frontend charts are interactive
+✓ No JavaScript console errors
+✓ No PHP errors in debug.log
+
+MAINTENANCE SCHEDULE:
+□ Monitor scraping success/failures weekly
+□ Check database size monthly (auto-pruned after 2 years)
+□ Verify WP-Cron is running
+□ Update USGS URLs if monitoring locations change
+
+BACKUP BEFORE DEPLOYMENT:
+□ Backup WordPress database
+□ Backup wp-content folder
+□ Test restore procedure
+
+ROLLBACK PLAN IF NEEDED:
+1. Deactivate plugin
+2. Delete plugin folder
+3. Restore from backup if necessary
+4. Tables are auto-removed on uninstall
+
+NOTES:
+- No build process = Easy updates
+- No npm dependencies = No security vulnerabilities from node_modules
+- Vanilla JavaScript = Works everywhere
+- Chart.js included = No CDN dependencies
+- Shared hosting compatible = Works on any WordPress host
+
+DATE DEPLOYED: _______________
+DEPLOYED BY: _________________
+ISSUES ENCOUNTERED: __________________________________________
+RESOLUTION: __________________________________________________

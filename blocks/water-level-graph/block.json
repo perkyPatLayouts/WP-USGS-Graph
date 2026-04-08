@@ -1,0 +1,47 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "usgs-water-levels/water-level-graph",
+	"version": "1.0.0",
+	"title": "USGS Water Level Graph",
+	"category": "widgets",
+	"icon": "chart-line",
+	"description": "Display a water level graph from USGS monitoring data.",
+	"keywords": ["usgs", "water", "level", "graph", "chart"],
+	"textdomain": "usgs-water-levels",
+	"editorScript": "file:./index.js",
+	"style": "file:./style.css",
+	"attributes": {
+		"graphId": {
+			"type": "number",
+			"default": 0
+		},
+		"width": {
+			"type": "string",
+			"default": "100%"
+		},
+		"lineColor": {
+			"type": "string",
+			"default": "#0073aa"
+		},
+		"backgroundColor": {
+			"type": "string",
+			"default": "#ffffff"
+		},
+		"axisColor": {
+			"type": "string",
+			"default": "#666666"
+		},
+		"labelColor": {
+			"type": "string",
+			"default": "#333333"
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": true,
+		"alignWide": true,
+		"className": true,
+		"customClassName": true
+	}
+}

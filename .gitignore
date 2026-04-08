@@ -1,0 +1,24 @@
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+
+# WordPress
+wp-config.php
+.htaccess
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Vendor (if using Composer)
+/vendor/
+composer.lock

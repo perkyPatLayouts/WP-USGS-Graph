@@ -4,7 +4,7 @@ Tags: usgs, water, monitoring, charts, graphs, gutenberg
 Requires at least: 6.0
 Tested up to: 6.4
 Requires PHP: 8.0
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,6 +69,11 @@ By default, the plugin keeps the last 2 years of data. Older measurements are au
 4. Frontend display of water level chart
 
 == Changelog ==
+
+= 1.1.1 =
+* Fixed: MySQL 8.0.20+ compatibility issue in save_measurements()
+* Fixed: "Failed to save measurements to database" error on modern MySQL/MariaDB
+* Changed deprecated VALUES() function to table alias syntax
 
 = 1.1.0 =
 * CRITICAL UPDATE: Migrated to new USGS OGC API (api.waterdata.usgs.gov)

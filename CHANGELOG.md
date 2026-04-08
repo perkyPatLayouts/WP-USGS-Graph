@@ -2,6 +2,30 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [1.1.1] - 2026-04-08
+
+### Fixed
+
+- **Fixed:** MySQL 8.0.20+ compatibility issue in `save_measurements()`
+- Changed deprecated `VALUES()` function to table alias syntax in ON DUPLICATE KEY UPDATE
+- Resolves "Failed to save measurements to database" error on modern MySQL/MariaDB versions
+
+### Technical Details
+
+**Problem:** MySQL deprecated the `VALUES()` function in version 8.0.20 for use in ON DUPLICATE KEY UPDATE clauses.
+
+**Solution:** Changed from:
+```sql
+ON DUPLICATE KEY UPDATE water_level = VALUES(water_level)
+```
+To:
+```sql
+VALUES $values_string AS new_vals
+ON DUPLICATE KEY UPDATE water_level = new_vals.water_level
+```
+
+**Affected file:** `includes/class-database.php` line 303
+
 ## [1.1.0] - 2026-04-08
 
 ### 🔥 CRITICAL UPDATE - USGS API Migration

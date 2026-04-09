@@ -148,6 +148,17 @@ class USGS_Water_Levels_Settings {
 		$graphs = USGS_Water_Levels_Database::get_all_graphs();
 
 		?>
+		<div class="notice notice-info inline" style="margin: 15px 0;">
+			<p><strong><?php esc_html_e( 'How to Display Graphs:', 'usgs-water-levels' ); ?></strong></p>
+			<ul style="margin-left: 20px;">
+				<li><strong><?php esc_html_e( 'Gutenberg Block:', 'usgs-water-levels' ); ?></strong> <?php esc_html_e( 'Insert the "USGS Water Level Graph" block in the block editor.', 'usgs-water-levels' ); ?></li>
+				<li><strong><?php esc_html_e( 'Shortcode (Classic Editor):', 'usgs-water-levels' ); ?></strong> <code>[usgs_water_level id="1" chart_type="line"]</code></li>
+			</ul>
+			<p style="margin-left: 20px;">
+				<em><?php esc_html_e( 'Parameters: chart_type (line/area/bar), width, line_color. Replace "1" with your graph ID.', 'usgs-water-levels' ); ?></em>
+			</p>
+		</div>
+
 		<p>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=usgs-water-levels&action=add' ) ); ?>" class="button button-primary">
 				<?php esc_html_e( 'Add New Graph', 'usgs-water-levels' ); ?>
@@ -160,13 +171,14 @@ class USGS_Water_Levels_Settings {
 			<table class="wp-list-table widefat fixed striped">
 				<thead>
 					<tr>
-						<th><?php esc_html_e( 'ID', 'usgs-water-levels' ); ?></th>
+						<th style="width: 50px;"><?php esc_html_e( 'ID', 'usgs-water-levels' ); ?></th>
 						<th><?php esc_html_e( 'Title', 'usgs-water-levels' ); ?></th>
+						<th><?php esc_html_e( 'Shortcode', 'usgs-water-levels' ); ?></th>
 						<th><?php esc_html_e( 'USGS URL', 'usgs-water-levels' ); ?></th>
-						<th><?php esc_html_e( 'Scrape Interval', 'usgs-water-levels' ); ?></th>
-						<th><?php esc_html_e( 'Status', 'usgs-water-levels' ); ?></th>
-						<th><?php esc_html_e( 'Last Scrape', 'usgs-water-levels' ); ?></th>
-						<th><?php esc_html_e( 'Actions', 'usgs-water-levels' ); ?></th>
+						<th style="width: 100px;"><?php esc_html_e( 'Scrape Interval', 'usgs-water-levels' ); ?></th>
+						<th style="width: 100px;"><?php esc_html_e( 'Status', 'usgs-water-levels' ); ?></th>
+						<th style="width: 120px;"><?php esc_html_e( 'Last Scrape', 'usgs-water-levels' ); ?></th>
+						<th style="width: 220px;"><?php esc_html_e( 'Actions', 'usgs-water-levels' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -178,6 +190,9 @@ class USGS_Water_Levels_Settings {
 						<tr>
 							<td><?php echo absint( $graph['id'] ); ?></td>
 							<td><strong><?php echo esc_html( $graph['title'] ); ?></strong></td>
+							<td>
+								<code style="font-size: 11px;">[usgs_water_level id="<?php echo absint( $graph['id'] ); ?>"]</code>
+							</td>
 							<td>
 								<a href="<?php echo esc_url( $graph['usgs_url'] ); ?>" target="_blank" rel="noopener noreferrer">
 									<?php echo esc_html( wp_trim_words( $graph['usgs_url'], 6, '...' ) ); ?>
@@ -318,6 +333,20 @@ class USGS_Water_Levels_Settings {
 
 				<tr>
 					<th scope="row">
+						<label for="date_start"><?php esc_html_e( 'Date Range', 'usgs-water-levels' ); ?></label>
+					</th>
+					<td>
+						<label for="date_start"><?php esc_html_e( 'Start Date:', 'usgs-water-levels' ); ?></label>
+						<input type="date" name="date_start" id="date_start" value="<?php echo esc_attr( $graph_data['date_start'] ?? '' ); ?>">
+						&nbsp;&nbsp;
+						<label for="date_end"><?php esc_html_e( 'End Date:', 'usgs-water-levels' ); ?></label>
+						<input type="date" name="date_end" id="date_end" value="<?php echo esc_attr( $graph_data['date_end'] ?? '' ); ?>">
+						<p class="description"><?php esc_html_e( 'Optional: Limit scraped data to this date range. Leave blank to scrape all available data.', 'usgs-water-levels' ); ?></p>
+					</td>
+				</tr>
+
+				<tr>
+					<th scope="row">
 						<label for="scrape_interval"><?php esc_html_e( 'Scrape Interval', 'usgs-water-levels' ); ?></label>
 					</th>
 					<td>
@@ -367,11 +396,32 @@ class USGS_Water_Levels_Settings {
 
 		$graph_id = isset( $_POST['graph_id'] ) ? absint( $_POST['graph_id'] ) : 0;
 
+		// Validate and sanitize date fields.
+		$date_start = '';
+		if ( ! empty( $_POST['date_start'] ) ) {
+			$date_start = sanitize_text_field( wp_unslash( $_POST['date_start'] ) );
+			// Validate date format (Y-m-d).
+			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_start ) ) {
+				$date_start = '';
+			}
+		}
+
+		$date_end = '';
+		if ( ! empty( $_POST['date_end'] ) ) {
+			$date_end = sanitize_text_field( wp_unslash( $_POST['date_end'] ) );
+			// Validate date format (Y-m-d).
+			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_end ) ) {
+				$date_end = '';
+			}
+		}
+
 		$data = array(
 			'title'           => isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '',
 			'usgs_url'        => isset( $_POST['usgs_url'] ) ? esc_url_raw( wp_unslash( $_POST['usgs_url'] ) ) : '',
 			'scrape_interval' => isset( $_POST['scrape_interval'] ) ? absint( $_POST['scrape_interval'] ) : 24,
 			'is_enabled'      => isset( $_POST['is_enabled'] ) ? 1 : 0,
+			'date_start'      => $date_start,
+			'date_end'        => $date_end,
 			'custom_css'      => isset( $_POST['custom_css'] ) ? wp_strip_all_tags( wp_unslash( $_POST['custom_css'] ) ) : '',
 		);
 

@@ -1,22 +1,25 @@
 # USGS Water Levels - WordPress Plugin
 
-A WordPress plugin that scrapes USGS water monitoring data and displays it as interactive graphs using Gutenberg blocks.
+A WordPress plugin that scrapes USGS water monitoring data and displays it as interactive graphs using Gutenberg blocks and shortcodes.
 
 **No build process required!** This plugin uses vanilla JavaScript and works on shared hosting without Node.js/npm.
 
 ## Features
 
-- **Automatic Data Scraping**: Periodically scrapes USGS water level measurements
+- **Automatic Data Scraping**: Periodically scrapes USGS water level measurements via OGC API
 - **Multiple Graphs**: Configure multiple monitoring locations
 - **Gutenberg Block**: Easy-to-use block for displaying graphs
+- **Shortcode Support**: Classic Editor compatible with `[usgs_water_level]` shortcode
+- **Date Range Filtering**: Limit scraped data to specific date ranges
 - **Customizable**: Set colors, dimensions, and scrape intervals
 - **Responsive Charts**: Beautiful line charts using Chart.js
-- **Database Storage**: Efficient data storage with automatic pruning
+- **Accurate Data**: Filters for consistent depth measurements (62610/62611 parameter codes)
+- **Database Storage**: Efficient data storage for historical measurements
 - **No Build Required**: Works out of the box on shared hosting
 
 ## Requirements
 
-- WordPress 6.0 or higher
+- WordPress 6.2 or higher
 - PHP 8.0 or higher
 - MySQL 5.7 or higher
 - **No Node.js or npm required**
@@ -58,6 +61,9 @@ A WordPress plugin that scrapes USGS water monitoring data and displays it as in
    - **USGS URL**: Full URL of the monitoring location
    - **Scrape Interval**: How often to fetch data (in hours)
    - **Status**: Enable/disable scraping
+   - **Date Range** (Optional): Limit data to specific dates
+     - Leave blank to scrape all available historical data
+     - Format: YYYY-MM-DD
    - **Custom CSS**: Optional styling
 
 Example USGS URL:
@@ -65,18 +71,47 @@ Example USGS URL:
 https://waterdata.usgs.gov/monitoring-location/USGS-410858072171501/
 ```
 
-### 2. Insert Block
+### 2. Display Graphs
+
+#### Option A: Gutenberg Block (Modern Editor)
 
 1. Edit any post or page
 2. Add the **USGS Water Level Graph** block
 3. Select your configured graph from the dropdown
-4. Customize colors and width in the block settings
-5. Publish!
+4. Choose chart type: Line, Area, or Bar
+5. Customize colors and width in the block settings
+6. Publish!
+
+#### Option B: Shortcode (Classic Editor)
+
+Use the shortcode in any post, page, or widget:
+
+```
+[usgs_water_level id="1"]
+```
+
+**Parameters:**
+- `id` (required) - Graph ID from settings page
+- `chart_type` (optional) - Chart type: "line", "area", or "bar" (default: "line")
+- `width` (optional) - Graph width (default: "100%")
+  - Examples: `"600px"`, `"80%"`, `"50vw"`
+- `line_color` (optional) - Line/bar color (default: "#0073aa")
+- `class` (optional) - Additional CSS classes
+
+**Examples:**
+```
+[usgs_water_level id="1"]
+[usgs_water_level id="1" chart_type="area"]
+[usgs_water_level id="1" chart_type="bar" line_color="#ff6600"]
+[usgs_water_level id="1" chart_type="line" width="600px"]
+[usgs_water_level id="1" chart_type="area" width="80%" line_color="#0073aa"]
+```
 
 ### 3. Manual Scraping
 
 - Click **Scrape Now** next to any graph to fetch data immediately
 - Useful for testing or updating data on demand
+- Each graph shows its shortcode in the admin table for easy copy/paste
 
 ## File Structure
 
@@ -115,6 +150,8 @@ Stores graph configurations.
 | usgs_url | text | USGS monitoring URL |
 | scrape_interval | int | Hours between scrapes |
 | is_enabled | tinyint | Enable/disable flag |
+| date_start | date | Optional start date for data range |
+| date_end | date | Optional end date for data range |
 | custom_css | text | Custom CSS for graph |
 | created_at | datetime | Creation timestamp |
 | updated_at | datetime | Last update timestamp |
@@ -154,22 +191,45 @@ wp transient get usgs_wl_scrape_log_1
 
 ### Scraping Not Working
 
-1. Check if WP-Cron is running:
+1. **Check if WP-Cron is running:**
    ```bash
    wp cron test
    ```
 
-2. Verify the USGS URL is accessible in a browser
+2. **Verify the USGS URL** is accessible in a browser
 
-3. Check the scrape log on the admin page for errors
+3. **Check the scrape log** on the admin page for errors
 
-4. Enable WP_DEBUG in wp-config.php to see detailed errors:
+4. **Enable WP_DEBUG** in wp-config.php to see detailed errors:
    ```php
    define('WP_DEBUG', true);
    define('WP_DEBUG_LOG', true);
    ```
 
-5. Manually trigger a scrape using the "Scrape Now" button
+5. **Manually trigger a scrape** using the "Scrape Now" button
+
+6. **Date range issues**: If you get "HTTP 400" errors:
+   - Check that your date range is valid (YYYY-MM-DD format)
+   - Try removing the date range to test without filtering
+   - The plugin uses OGC API `datetime` parameter format
+
+### No Data / Empty Measurements
+
+1. **Check parameter codes**: The plugin only accepts consistent depth measurements:
+   - ✅ 62610 (Standard depth below land surface)
+   - ✅ 62611 (Depth below land surface, NAVD88)
+   - ❌ 72019 (Excluded - uses incompatible NGVD29 datum)
+   - ❌ 72020 (Excluded - elevation above datum, not depth)
+
+2. **Verify your monitoring location has groundwater data**:
+   - Visit your USGS URL in a browser
+   - Look for "Field Measurements" tab
+   - Check if parameter code 62610 or 62611 exists
+
+3. **Run debug script** to see what's happening:
+   ```bash
+   php wp-content/plugins/usgs-water-levels/debug-scrape-now.php
+   ```
 
 ### Block Not Displaying
 
@@ -222,10 +282,11 @@ If WP-Cron is disabled on your server, you can:
 ## Performance
 
 - Data is cached using WordPress transients
-- Old measurements are automatically pruned (keeps 2 years)
-- Scraping respects configured intervals
-- Charts load only when block is present
-- Minimal database queries
+- Historical measurements are preserved (no automatic pruning)
+- Scraping respects configured intervals to avoid API overload
+- Charts load only when block is present on the page
+- Minimal database queries using indexed columns
+- 30-measurement limit per scrape for optimal performance
 
 ## Customization
 

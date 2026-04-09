@@ -26,10 +26,12 @@ class USGS_Water_Levels_Scraper {
 	/**
 	 * Fetch and parse USGS data from a monitoring location URL.
 	 *
-	 * @param string $url USGS monitoring location URL.
+	 * @param string $url        USGS monitoring location URL.
+	 * @param string $date_start Optional start date (Y-m-d format).
+	 * @param string $date_end   Optional end date (Y-m-d format).
 	 * @return array|WP_Error Array of measurements on success, WP_Error on failure.
 	 */
-	public static function scrape_usgs_data( $url ) {
+	public static function scrape_usgs_data( $url, $date_start = null, $date_end = null ) {
 		if ( empty( $url ) ) {
 			return new WP_Error( 'invalid_url', __( 'Invalid USGS URL provided.', 'usgs-water-levels' ) );
 		}
@@ -43,15 +45,30 @@ class USGS_Water_Levels_Scraper {
 			);
 		}
 
-		// Build API URL.
-		$api_url = add_query_arg(
-			array(
-				'f'                       => 'json',
-				'monitoring_location_id'  => $site_id,
-				'limit'                   => 10000, // Get max number of measurements.
-			),
-			self::API_ENDPOINT
+		// Build API URL parameters.
+		$api_params = array(
+			'f'                       => 'json',
+			'monitoring_location_id'  => $site_id,
+			'limit'                   => 1000, // Increase limit for date ranges.
 		);
+
+		// Add date range if specified (OGC API datetime parameter format).
+		if ( ! empty( $date_start ) && ! empty( $date_end ) ) {
+			// OGC API uses datetime=START/END format.
+			$start_iso = gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $date_start ) );
+			$end_iso   = gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $date_end . ' 23:59:59' ) );
+			$api_params['datetime'] = $start_iso . '/' . $end_iso;
+		} elseif ( ! empty( $date_start ) ) {
+			// Only start date - open-ended range.
+			$start_iso = gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $date_start ) );
+			$api_params['datetime'] = $start_iso . '/..';
+		} elseif ( ! empty( $date_end ) ) {
+			// Only end date - from beginning to end date.
+			$end_iso = gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $date_end . ' 23:59:59' ) );
+			$api_params['datetime'] = '../' . $end_iso;
+		}
+
+		$api_url = add_query_arg( $api_params, self::API_ENDPOINT );
 
 		// Fetch data from API.
 		$response = wp_remote_get(
@@ -159,20 +176,16 @@ class USGS_Water_Levels_Scraper {
 			}
 
 			// Parameter codes for groundwater levels:
-			// 62610 = Depth to water level, feet below land surface
+			// 62610 = Depth to water level, feet below land surface (MOST COMMON)
 			// 62611 = Depth to water level, feet below land surface, NAVD88
-			// 72019 = Depth to water level, feet below land surface, NGVD29
-			// 72020 = Groundwater level above NGVD29, feet
-			// We'll accept all groundwater-related measurements.
+			// 72019 = Depth to water level, feet below land surface, NGVD29 (uses different datum - excluded to avoid mixing)
+			// 72020 = Groundwater level above NGVD29, feet (elevation, not depth)
 			$param_code = isset( $props['parameter_code'] ) ? $props['parameter_code'] : '';
-			$is_gw_level = in_array(
-				$param_code,
-				array( '62610', '62611', '72019', '72020', '72150' ),
-				true
-			);
 
-			// Skip non-groundwater measurements.
-			if ( ! $is_gw_level && ! empty( $param_code ) ) {
+			// Accept modern depth measurements (62610, 62611) which use consistent datums.
+			// Exclude 72019 (NGVD29) as it uses a different reference point causing inconsistent values.
+			$valid_depth_codes = array( '62610', '62611' );
+			if ( ! empty( $param_code ) && ! in_array( $param_code, $valid_depth_codes, true ) ) {
 				continue;
 			}
 
@@ -196,6 +209,12 @@ class USGS_Water_Levels_Scraper {
 
 		// Remove duplicates and sort by date.
 		$measurements = self::deduplicate_measurements( $measurements );
+
+		// Limit to most recent 30 measurements.
+		// Measurements are sorted ascending, so we take the last 30.
+		if ( count( $measurements ) > 30 ) {
+			$measurements = array_slice( $measurements, -30 );
+		}
 
 		return $measurements;
 	}
@@ -275,8 +294,11 @@ class USGS_Water_Levels_Scraper {
 			return new WP_Error( 'graph_disabled', __( 'Graph is disabled.', 'usgs-water-levels' ) );
 		}
 
-		// Scrape USGS data.
-		$measurements = self::scrape_usgs_data( $graph['usgs_url'] );
+		// Scrape USGS data with optional date range.
+		$date_start = ! empty( $graph['date_start'] ) ? $graph['date_start'] : null;
+		$date_end   = ! empty( $graph['date_end'] ) ? $graph['date_end'] : null;
+
+		$measurements = self::scrape_usgs_data( $graph['usgs_url'], $date_start, $date_end );
 
 		if ( is_wp_error( $measurements ) ) {
 			// Log error.
@@ -296,8 +318,8 @@ class USGS_Water_Levels_Scraper {
 		// Log success.
 		self::log_success( $graph_id, count( $measurements ) );
 
-		// Prune old data (keep last 2 years by default).
-		USGS_Water_Levels_Database::prune_old_measurements( $graph_id, 730 );
+		// Don't prune - USGS data includes historical measurements.
+		// USGS_Water_Levels_Database::prune_old_measurements( $graph_id, 730 );
 
 		return true;
 	}

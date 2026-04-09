@@ -15,6 +15,7 @@
 
 		canvases.forEach(function(canvas) {
 			const chartData = JSON.parse(canvas.dataset.chartData || '{}');
+			const chartType = canvas.dataset.chartType || 'line';
 			const lineColor = canvas.dataset.lineColor || '#0073aa';
 
 			if (!chartData.labels || !chartData.datasets) {
@@ -33,25 +34,51 @@
 				canvas.chart.destroy();
 			}
 
+			// Prepare dataset configuration based on chart type
+			let datasetConfig = {
+				label: chartData.datasets[0].label || 'Water Level (ft)',
+				data: chartData.datasets[0].data,
+				borderColor: lineColor,
+				backgroundColor: hexToRgba(lineColor, chartType === 'bar' ? 0.7 : 0.1),
+				borderWidth: 2
+			};
+
+			// Add type-specific configurations
+			if (chartType === 'line') {
+				// Line chart - no fill, show points
+				datasetConfig.fill = false;
+				datasetConfig.pointRadius = 3;
+				datasetConfig.pointBackgroundColor = lineColor;
+				datasetConfig.pointBorderColor = '#fff';
+				datasetConfig.pointBorderWidth = 1;
+				datasetConfig.pointHoverRadius = 5;
+				datasetConfig.tension = 0.3;
+			} else if (chartType === 'area') {
+				// Area chart - filled line with gradient
+				datasetConfig.fill = true;
+				datasetConfig.backgroundColor = hexToRgba(lineColor, 0.2);
+				datasetConfig.pointRadius = 2;
+				datasetConfig.pointBackgroundColor = lineColor;
+				datasetConfig.pointBorderColor = '#fff';
+				datasetConfig.pointBorderWidth = 1;
+				datasetConfig.pointHoverRadius = 4;
+				datasetConfig.tension = 0.4;
+			} else if (chartType === 'bar') {
+				// Bar chart - solid bars, no points or tension
+				datasetConfig.borderWidth = 1;
+				datasetConfig.barThickness = 'flex';
+				datasetConfig.maxBarThickness = 40;
+			}
+
+			// Determine Chart.js type (area uses 'line' type with fill)
+			const chartJsType = chartType === 'area' ? 'line' : chartType;
+
 			// Create new chart
 			canvas.chart = new Chart(ctx, {
-				type: 'line',
+				type: chartJsType,
 				data: {
 					labels: chartData.labels,
-					datasets: [{
-						label: chartData.datasets[0].label || 'Water Level (ft)',
-						data: chartData.datasets[0].data,
-						borderColor: lineColor,
-						backgroundColor: hexToRgba(lineColor, 0.1),
-						borderWidth: 2,
-						pointRadius: 3,
-						pointBackgroundColor: lineColor,
-						pointBorderColor: '#fff',
-						pointBorderWidth: 1,
-						pointHoverRadius: 5,
-						fill: true,
-						tension: 0.3
-					}]
+					datasets: [datasetConfig]
 				},
 				options: {
 					responsive: true,

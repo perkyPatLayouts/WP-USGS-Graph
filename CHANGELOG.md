@@ -2,28 +2,62 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
-## [1.1.2] - 2026-04-08
+## [2.2.0] - 2026-04-09
+
+### Added
+- **Chart Type Selection**: Choose between Line, Area, or Bar charts
+  - Added `chartType` attribute to Gutenberg block with dropdown selector
+  - Added `chart_type` parameter to shortcode (values: "line", "area", "bar")
+  - Line chart: Clean line with points, no fill
+  - Area chart: Filled area under line with gradient effect
+  - Bar chart: Vertical bars for each measurement
+- Updated frontend Chart.js rendering to support all three chart types
+- Added chart type to block editor preview display
+
+### Changed
+- Default chart type is "line" (maintains backward compatibility)
+- Updated shortcode documentation with chart type examples
+- Updated admin settings page with chart type parameter info
+
+## [2.1.3] - 2026-04-09
 
 ### Fixed
+- **Critical**: Fixed date range filtering causing HTTP 400 errors
+  - Changed from invalid `timeBegin`/`timeEnd` parameters to OGC API standard `datetime` parameter
+  - Now supports proper date range format: `datetime=START/END`
+  - Supports open-ended ranges: `START/..` or `../END`
 
-- **Fixed:** SQLite compatibility in `save_measurements()` function
-- Changed from bulk INSERT with ON DUPLICATE KEY UPDATE to individual INSERT/UPDATE operations
-- Now works with WordPress SQLite Database Integration plugin
-- Uses WordPress database abstraction layer (wpdb->insert/update) for compatibility
+## [2.1.2] - 2026-04-09
 
-### Technical Details
+### Fixed
+- **Data Accuracy**: Excluded parameter code 72019 (NGVD29 datum) to prevent mixing incompatible measurements
+  - Only accepts 62610 (standard depth) and 62611 (NAVD88 depth) for consistent values
+  - Prevents graphs from showing mixed values (e.g., 3 ft and 19 ft in same dataset)
 
-**Problem:** The bulk INSERT with ON DUPLICATE KEY UPDATE syntax wasn't translating properly through the WordPress SQLite integration layer, causing "Failed to save measurements to database" errors.
+## [2.1.1] - 2026-04-09
 
-**Solution:** Rewrote `save_measurements()` to:
-- Insert measurements individually using `wpdb->insert()`
-- Fall back to `wpdb->update()` if INSERT fails due to duplicate key
-- Track success/error counts for better reliability
-- Return true if at least some measurements were saved
+### Fixed
+- **Scraping**: Expanded parameter code acceptance to include 62611 (depth below surface, NAVD88)
+  - Previously only accepted 62610, causing "no data" errors for many sites
 
-**Performance:** Slightly slower than bulk insert, but ensures compatibility with both MySQL and SQLite.
+## [2.1.0] - 2026-04-09
 
-**Affected file:** `includes/class-database.php`
+### Added
+- **Shortcode Support**: Added `[usgs_water_level]` shortcode for Classic Editor compatibility
+  - Supports parameters: `id`, `width`, `line_color`, `class`
+- **Admin UI**: Added shortcode column to graphs table for easy copy/paste
+- **Documentation**: Added usage instructions in admin settings page
+
+## [2.0.2] - 2026-04-09
+
+### Security
+- Fixed SQL injection vulnerability in `drop_tables()` function
+- Fixed XSS vulnerability in custom CSS output
+- Added date validation with regex pattern matching
+- Fixed date range fields not being saved in graph settings
+
+### Changed
+- Updated minimum WordPress version to 6.2
 
 ## [1.1.1] - 2026-04-08
 

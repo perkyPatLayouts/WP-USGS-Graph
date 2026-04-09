@@ -2,9 +2,9 @@
 /**
  * Plugin Name: USGS Water Levels
  * Plugin URI: https://github.com/yourusername/usgs-water-levels
- * Description: Scrapes USGS water monitoring data and displays it as interactive graphs via Gutenberg blocks
- * Version: 1.1.2
- * Requires at least: 6.0
+ * Description: Scrapes USGS water monitoring data and displays it as interactive graphs via Gutenberg blocks and shortcodes
+ * Version: 2.2.0
+ * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author: Your Name
  * Author URI: https://yourwebsite.com
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'USGS_WATER_LEVELS_VERSION', '1.1.2' );
+define( 'USGS_WATER_LEVELS_VERSION', '2.2.0' );
 define( 'USGS_WATER_LEVELS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'USGS_WATER_LEVELS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'USGS_WATER_LEVELS_PLUGIN_FILE', __FILE__ );
@@ -84,6 +84,9 @@ class USGS_Water_Levels {
 		// Register Gutenberg block.
 		add_action( 'init', array( $this, 'register_block' ) );
 
+		// Enqueue block editor assets.
+		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_block_editor_assets' ) );
+
 		// Enqueue admin scripts and styles.
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
 	}
@@ -123,6 +126,9 @@ class USGS_Water_Levels {
 
 		// Initialize cron handler.
 		USGS_Water_Levels_Cron::get_instance();
+
+		// Register shortcode for Classic Editor support.
+		add_shortcode( 'usgs_water_level', array( $this, 'render_shortcode' ) );
 	}
 
 	/**
@@ -135,6 +141,35 @@ class USGS_Water_Levels {
 			array(
 				'render_callback' => array( $this, 'render_block' ),
 			)
+		);
+	}
+
+	/**
+	 * Enqueue block editor assets.
+	 */
+	public function enqueue_block_editor_assets() {
+		// Enqueue block editor script with proper dependencies.
+		wp_enqueue_script(
+			'usgs-water-levels-block-editor',
+			USGS_WATER_LEVELS_PLUGIN_URL . 'blocks/water-level-graph/index.js',
+			array(
+				'wp-blocks',
+				'wp-element',
+				'wp-block-editor',
+				'wp-components',
+				'wp-i18n',
+				'wp-api-fetch',
+			),
+			USGS_WATER_LEVELS_VERSION,
+			true
+		);
+
+		// Enqueue block editor styles.
+		wp_enqueue_style(
+			'usgs-water-levels-block-editor',
+			USGS_WATER_LEVELS_PLUGIN_URL . 'blocks/water-level-graph/style.css',
+			array(),
+			USGS_WATER_LEVELS_VERSION
 		);
 	}
 
@@ -172,7 +207,8 @@ class USGS_Water_Levels {
 			),
 		);
 
-		// Get block attributes for styling.
+		// Get block attributes for styling and chart type.
+		$chart_type = isset( $attributes['chartType'] ) ? esc_attr( $attributes['chartType'] ) : 'line';
 		$width      = isset( $attributes['width'] ) ? esc_attr( $attributes['width'] ) : '100%';
 		$line_color = isset( $attributes['lineColor'] ) ? esc_attr( $attributes['lineColor'] ) : '#0073aa';
 
@@ -207,16 +243,56 @@ class USGS_Water_Levels {
 		?>
 		<div class="<?php echo esc_attr( $wrapper_classes ); ?>" style="width: <?php echo esc_attr( $width ); ?>;">
 			<?php if ( ! empty( $graph_config['custom_css'] ) ) : ?>
-				<style><?php echo wp_kses_post( $graph_config['custom_css'] ); ?></style>
+				<style><?php echo wp_strip_all_tags( $graph_config['custom_css'] ); ?></style>
 			<?php endif; ?>
 			<canvas
 				id="<?php echo esc_attr( $chart_id ); ?>"
 				data-chart-data="<?php echo esc_attr( wp_json_encode( $chart_data ) ); ?>"
+				data-chart-type="<?php echo esc_attr( $chart_type ); ?>"
 				data-line-color="<?php echo esc_attr( $line_color ); ?>"
 			></canvas>
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Render shortcode callback for Classic Editor support.
+	 *
+	 * Usage: [usgs_water_level id="1" chart_type="line" width="100%" line_color="#0073aa"]
+	 *
+	 * @param array $atts Shortcode attributes.
+	 * @return string Shortcode HTML output.
+	 */
+	public function render_shortcode( $atts ) {
+		// Parse shortcode attributes with defaults.
+		$atts = shortcode_atts(
+			array(
+				'id'         => 0,
+				'chart_type' => 'line',
+				'width'      => '100%',
+				'line_color' => '#0073aa',
+				'class'      => '',
+			),
+			$atts,
+			'usgs_water_level'
+		);
+
+		// Validate chart type.
+		$valid_types = array( 'line', 'area', 'bar' );
+		$chart_type  = in_array( $atts['chart_type'], $valid_types, true ) ? $atts['chart_type'] : 'line';
+
+		// Convert shortcode attributes to block-style attributes.
+		$attributes = array(
+			'graphId'   => intval( $atts['id'] ),
+			'chartType' => $chart_type,
+			'width'     => $atts['width'],
+			'lineColor' => $atts['line_color'],
+			'className' => $atts['class'],
+		);
+
+		// Reuse the block rendering logic.
+		return $this->render_block( $attributes, '' );
 	}
 
 	/**

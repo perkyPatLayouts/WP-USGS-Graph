@@ -2,60 +2,22 @@
  * USGS Water Level Graph Block
  *
  * No build process required - uses vanilla JavaScript with WordPress APIs
+ *
+ * Note: Block is registered via block.json and PHP register_block_type().
+ * This file only provides the edit component.
  */
 
 (function() {
 	'use strict';
 
-	const { registerBlockType } = wp.blocks;
 	const { createElement: el, useState, useEffect } = wp.element;
 	const { useBlockProps, InspectorControls } = wp.blockEditor;
 	const { PanelBody, SelectControl, TextControl, ColorPicker } = wp.components;
 	const { __ } = wp.i18n;
-	const { apiFetch } = wp;
+	const apiFetch = wp.apiFetch;
 
-	/**
-	 * Register block type
-	 */
-	registerBlockType('usgs-water-levels/water-level-graph', {
-		title: __('USGS Water Level Graph', 'usgs-water-levels'),
-		description: __('Display a water level graph from USGS monitoring data.', 'usgs-water-levels'),
-		category: 'widgets',
-		icon: 'chart-line',
-		keywords: ['usgs', 'water', 'level', 'graph', 'chart'],
-		attributes: {
-			graphId: {
-				type: 'number',
-				default: 0
-			},
-			width: {
-				type: 'string',
-				default: '100%'
-			},
-			lineColor: {
-				type: 'string',
-				default: '#0073aa'
-			},
-			backgroundColor: {
-				type: 'string',
-				default: '#ffffff'
-			},
-			axisColor: {
-				type: 'string',
-				default: '#666666'
-			},
-			labelColor: {
-				type: 'string',
-				default: '#333333'
-			}
-		},
-		supports: {
-			html: false,
-			align: true,
-			alignWide: true,
-			className: true,
-			customClassName: true
-		},
+	// Register the edit component with WordPress
+	wp.blocks.registerBlockType('usgs-water-levels/water-level-graph', {
 		edit: EditComponent,
 		save: function() {
 			return null; // Dynamic block - rendered server-side
@@ -67,7 +29,7 @@
 	 */
 	function EditComponent(props) {
 		const { attributes, setAttributes } = props;
-		const { graphId, width, lineColor, backgroundColor, axisColor, labelColor } = attributes;
+		const { graphId, chartType, width, lineColor, backgroundColor, axisColor, labelColor } = attributes;
 		const blockProps = useBlockProps();
 
 		const [graphs, setGraphs] = useState([]);
@@ -118,6 +80,19 @@
 						setAttributes({ graphId: parseInt(value) });
 					},
 					help: __('Choose which USGS monitoring location to display.', 'usgs-water-levels')
+				}),
+				el(SelectControl, {
+					label: __('Chart Type', 'usgs-water-levels'),
+					value: chartType,
+					options: [
+						{ label: __('Line Chart', 'usgs-water-levels'), value: 'line' },
+						{ label: __('Area Chart', 'usgs-water-levels'), value: 'area' },
+						{ label: __('Bar Chart', 'usgs-water-levels'), value: 'bar' }
+					],
+					onChange: function(value) {
+						setAttributes({ chartType: value });
+					},
+					help: __('Choose how to display the water level data.', 'usgs-water-levels')
 				}),
 				el(TextControl, {
 					label: __('Width', 'usgs-water-levels'),
@@ -212,6 +187,8 @@
 					'p',
 					{ style: { fontSize: '14px', color: '#666' } },
 					__('Graph ID:', 'usgs-water-levels') + ' ' + graphId,
+					el('br', {}),
+					__('Chart Type:', 'usgs-water-levels') + ' ' + chartType.charAt(0).toUpperCase() + chartType.slice(1),
 					el('br', {}),
 					__('Width:', 'usgs-water-levels') + ' ' + width
 				),

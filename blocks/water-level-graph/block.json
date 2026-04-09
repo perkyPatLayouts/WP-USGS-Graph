@@ -9,12 +9,15 @@
 	"description": "Display a water level graph from USGS monitoring data.",
 	"keywords": ["usgs", "water", "level", "graph", "chart"],
 	"textdomain": "usgs-water-levels",
-	"editorScript": "file:./index.js",
-	"style": "file:./style.css",
 	"attributes": {
 		"graphId": {
 			"type": "number",
 			"default": 0
+		},
+		"chartType": {
+			"type": "string",
+			"default": "line",
+			"enum": ["line", "area", "bar"]
 		},
 		"width": {
 			"type": "string",

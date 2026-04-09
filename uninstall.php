@@ -27,7 +27,10 @@ function usgs_water_levels_uninstall() {
 
 	// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->query(
-		"DELETE FROM {$wpdb->options} WHERE option_name LIKE '%usgs_wl_%'"
+		$wpdb->prepare(
+			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+			$wpdb->esc_like( 'usgs_wl_' ) . '%'
+		)
 	);
 	// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 

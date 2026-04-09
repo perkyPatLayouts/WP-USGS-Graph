@@ -45,6 +45,8 @@ class USGS_Water_Levels_Database {
 			usgs_url text NOT NULL,
 			scrape_interval int(11) NOT NULL DEFAULT 24,
 			is_enabled tinyint(1) NOT NULL DEFAULT 1,
+			date_start date DEFAULT NULL,
+			date_end date DEFAULT NULL,
 			custom_css text,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -63,8 +65,7 @@ class USGS_Water_Levels_Database {
 			PRIMARY KEY (id),
 			KEY graph_id (graph_id),
 			KEY measurement_date (measurement_date),
-			UNIQUE KEY unique_measurement (graph_id, measurement_date),
-			CONSTRAINT fk_graph_id FOREIGN KEY (graph_id) REFERENCES $graphs_table(id) ON DELETE CASCADE
+			UNIQUE KEY unique_measurement (graph_id, measurement_date)
 		) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -85,8 +86,8 @@ class USGS_Water_Levels_Database {
 		$graphs_table       = $wpdb->prefix . self::$graphs_table;
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "DROP TABLE IF EXISTS $measurements_table" );
-		$wpdb->query( "DROP TABLE IF EXISTS $graphs_table" );
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $measurements_table ) );
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $graphs_table ) );
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		delete_option( 'usgs_water_levels_db_version' );
@@ -164,6 +165,8 @@ class USGS_Water_Levels_Database {
 			'usgs_url'        => '',
 			'scrape_interval' => 24,
 			'is_enabled'      => 1,
+			'date_start'      => null,
+			'date_end'        => null,
 			'custom_css'      => '',
 		);
 
@@ -177,9 +180,11 @@ class USGS_Water_Levels_Database {
 				'usgs_url'        => esc_url_raw( $data['usgs_url'] ),
 				'scrape_interval' => absint( $data['scrape_interval'] ),
 				'is_enabled'      => absint( $data['is_enabled'] ),
+				'date_start'      => ! empty( $data['date_start'] ) ? sanitize_text_field( $data['date_start'] ) : null,
+				'date_end'        => ! empty( $data['date_end'] ) ? sanitize_text_field( $data['date_end'] ) : null,
 				'custom_css'      => wp_strip_all_tags( $data['custom_css'] ),
 			),
-			array( '%s', '%s', '%d', '%d', '%s' )
+			array( '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
 		);
 
 		return $result ? $wpdb->insert_id : false;
@@ -218,6 +223,16 @@ class USGS_Water_Levels_Database {
 		if ( isset( $data['is_enabled'] ) ) {
 			$update_data['is_enabled'] = absint( $data['is_enabled'] );
 			$format[]                  = '%d';
+		}
+
+		if ( isset( $data['date_start'] ) ) {
+			$update_data['date_start'] = ! empty( $data['date_start'] ) ? sanitize_text_field( $data['date_start'] ) : null;
+			$format[]                  = '%s';
+		}
+
+		if ( isset( $data['date_end'] ) ) {
+			$update_data['date_end'] = ! empty( $data['date_end'] ) ? sanitize_text_field( $data['date_end'] ) : null;
+			$format[]                = '%s';
 		}
 
 		if ( isset( $data['custom_css'] ) ) {
@@ -273,62 +288,113 @@ class USGS_Water_Levels_Database {
 		global $wpdb;
 
 		$table = $wpdb->prefix . self::$measurements_table;
+		$debug = array();
+
+		$debug[] = 'Called with graph_id: ' . $graph_id . ', measurements count: ' . count( $measurements );
 
 		if ( empty( $measurements ) || ! is_array( $measurements ) ) {
+			$debug[] = 'FAIL: measurements empty or not array';
+			set_transient( 'usgs_wl_debug_' . $graph_id, $debug, 300 );
 			return false;
 		}
 
-		$success_count = 0;
-		$error_count   = 0;
+		// Show first measurement structure.
+		if ( ! empty( $measurements ) ) {
+			$debug[] = 'First measurement: ' . print_r( $measurements[0], true );
+		}
 
-		// Insert measurements one at a time for SQLite compatibility.
+		$values = array();
 		foreach ( $measurements as $measurement ) {
 			if ( ! isset( $measurement['date'] ) || ! isset( $measurement['value'] ) ) {
+				$debug[] = 'Skipping measurement - keys: ' . implode( ', ', array_keys( $measurement ) );
 				continue;
 			}
 
 			$date  = sanitize_text_field( $measurement['date'] );
 			$value = floatval( $measurement['value'] );
 
-			// Try to insert the measurement.
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$result = $wpdb->insert(
+			$values[] = $wpdb->prepare( '(%d, %s, %f)', $graph_id, $date, $value );
+		}
+
+		$debug[] = 'Prepared ' . count( $values ) . ' values to insert';
+
+		if ( empty( $values ) ) {
+			$debug[] = 'FAIL: values array empty after processing';
+			set_transient( 'usgs_wl_debug_' . $graph_id, $debug, 300 );
+			return false;
+		}
+
+		$values_string = implode( ', ', $values );
+		$debug[] = 'First value: ' . ( ! empty( $values ) ? $values[0] : 'none' );
+
+		$insert_query = "INSERT INTO $table (graph_id, measurement_date, water_level)
+			VALUES $values_string
+			ON DUPLICATE KEY UPDATE water_level = VALUES(water_level)";
+
+		$debug[] = 'Full INSERT query (first 500 chars): ' . substr( $insert_query, 0, 500 );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = $wpdb->query( $insert_query );
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		$debug[] = 'Query result: ' . var_export( $result, true );
+		$debug[] = 'Last error: ' . ( $wpdb->last_error ? $wpdb->last_error : 'none' );
+		$debug[] = 'Rows affected: ' . $wpdb->rows_affected;
+
+		// Verify data was saved.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM $table WHERE graph_id = %d",
+				$graph_id
+			)
+		);
+		$debug[] = 'Final DB count: ' . $count;
+
+		// Try deleting and re-inserting first row using simple INSERT.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "DELETE FROM $table WHERE graph_id = $graph_id" );
+
+		// Insert rows one by one using wpdb->insert().
+		$inserted_count = 0;
+		foreach ( $measurements as $measurement ) {
+			if ( ! isset( $measurement['date'] ) || ! isset( $measurement['value'] ) ) {
+				continue;
+			}
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$insert_result = $wpdb->insert(
 				$table,
 				array(
 					'graph_id'         => $graph_id,
-					'measurement_date' => $date,
-					'water_level'      => $value,
+					'measurement_date' => sanitize_text_field( $measurement['date'] ),
+					'water_level'      => floatval( $measurement['value'] ),
 				),
 				array( '%d', '%s', '%f' )
 			);
 
-			if ( false === $result ) {
-				// Insert failed, likely due to duplicate key constraint.
-				// Try to update the existing record instead.
-				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$update_result = $wpdb->update(
-					$table,
-					array( 'water_level' => $value ),
-					array(
-						'graph_id'         => $graph_id,
-						'measurement_date' => $date,
-					),
-					array( '%f' ),
-					array( '%d', '%s' )
-				);
-
-				if ( false !== $update_result ) {
-					++$success_count;
-				} else {
-					++$error_count;
-				}
-			} else {
-				++$success_count;
+			if ( $insert_result ) {
+				$inserted_count++;
 			}
 		}
 
-		// Return true if at least some measurements were saved successfully.
-		return $success_count > 0;
+		$debug[] = 'Inserted one-by-one: ' . $inserted_count . ' rows';
+
+		// Check count again.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$final_count = $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM $table WHERE graph_id = %d",
+				$graph_id
+			)
+		);
+		$debug[] = 'Count after one-by-one insert: ' . $final_count;
+
+		set_transient( 'usgs_wl_debug_' . $graph_id, $debug, 300 );
+
+		return $inserted_count > 0;
 	}
 
 	/**
@@ -342,6 +408,7 @@ class USGS_Water_Levels_Database {
 		global $wpdb;
 
 		$table = $wpdb->prefix . self::$measurements_table;
+		$limit = absint( $limit ); // Sanitize limit as integer.
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $wpdb->get_results(
@@ -351,9 +418,8 @@ class USGS_Water_Levels_Database {
 				FROM $table
 				WHERE graph_id = %d
 				ORDER BY measurement_date ASC
-				LIMIT %d",
-				$graph_id,
-				$limit
+				LIMIT $limit",
+				$graph_id
 			),
 			ARRAY_A
 		);

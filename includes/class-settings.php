@@ -148,42 +148,51 @@ class USGS_Water_Levels_Settings {
 		$graphs = USGS_Water_Levels_Database::get_all_graphs();
 
 		?>
-		<div class="notice notice-info inline" style="margin: 15px 0;">
-			<p><strong><?php esc_html_e( 'How to Display Graphs:', 'usgs-water-levels' ); ?></strong></p>
-			<ul style="margin-left: 20px;">
-				<li><strong><?php esc_html_e( 'Gutenberg Block:', 'usgs-water-levels' ); ?></strong> <?php esc_html_e( 'Insert the "USGS Water Level Graph" block in the block editor.', 'usgs-water-levels' ); ?></li>
-				<li><strong><?php esc_html_e( 'Shortcode (Classic Editor):', 'usgs-water-levels' ); ?></strong> <code>[usgs_water_level id="1"]</code></li>
-			</ul>
+		<div class="notice notice-info" style="margin: 15px 0; padding: 15px; border-left: 4px solid #72aee6; background: #f0f6fc;">
+			<h3 style="margin-top: 0;"><?php esc_html_e( 'How to Display Graphs', 'usgs-water-levels' ); ?></h3>
 
-			<div style="margin-left: 20px; margin-top: 12px;">
-				<p><strong><?php esc_html_e( 'Shortcode Parameters:', 'usgs-water-levels' ); ?></strong></p>
-				<table style="margin: 8px 0; border-collapse: collapse;">
-					<tr>
-						<td style="padding: 4px 12px 4px 0; font-family: monospace; color: #2271b1;"><strong>id</strong></td>
-						<td style="padding: 4px;"><?php esc_html_e( '(required) Graph ID from table below', 'usgs-water-levels' ); ?></td>
-					</tr>
-					<tr>
-						<td style="padding: 4px 12px 4px 0; font-family: monospace; color: #2271b1;"><strong>chart_type</strong></td>
-						<td style="padding: 4px;"><?php esc_html_e( '(optional) "line", "area", or "bar" - default: "line"', 'usgs-water-levels' ); ?></td>
-					</tr>
-					<tr>
-						<td style="padding: 4px 12px 4px 0; font-family: monospace; color: #2271b1;"><strong>width</strong></td>
-						<td style="padding: 4px;"><?php esc_html_e( '(optional) "100%", "600px", "80vw" - default: "100%"', 'usgs-water-levels' ); ?></td>
-					</tr>
-					<tr>
-						<td style="padding: 4px 12px 4px 0; font-family: monospace; color: #2271b1;"><strong>line_color</strong></td>
-						<td style="padding: 4px;"><?php esc_html_e( '(optional) Hex color code - default: "#0073aa"', 'usgs-water-levels' ); ?></td>
-					</tr>
-					<tr>
-						<td style="padding: 4px 12px 4px 0; font-family: monospace; color: #2271b1;"><strong>class</strong></td>
-						<td style="padding: 4px;"><?php esc_html_e( '(optional) Custom CSS classes', 'usgs-water-levels' ); ?></td>
-					</tr>
-				</table>
+			<p><strong><?php esc_html_e( 'Option 1: Gutenberg Block', 'usgs-water-levels' ); ?></strong></p>
+			<p style="margin-left: 20px;"><?php esc_html_e( 'Insert the "USGS Water Level Graph" block in the block editor and select your graph from the dropdown.', 'usgs-water-levels' ); ?></p>
 
-				<p style="margin-top: 12px;"><strong><?php esc_html_e( 'Examples:', 'usgs-water-levels' ); ?></strong></p>
-				<code style="display: block; background: #f6f7f7; padding: 8px; margin: 4px 0; border-left: 3px solid #2271b1;">[usgs_water_level id="1"]</code>
-				<code style="display: block; background: #f6f7f7; padding: 8px; margin: 4px 0; border-left: 3px solid #2271b1;">[usgs_water_level id="1" chart_type="area"]</code>
-				<code style="display: block; background: #f6f7f7; padding: 8px; margin: 4px 0; border-left: 3px solid #2271b1;">[usgs_water_level id="1" chart_type="bar" width="600px" line_color="#dc3545"]</code>
+			<p><strong><?php esc_html_e( 'Option 2: Shortcode (Classic Editor or anywhere shortcodes work)', 'usgs-water-levels' ); ?></strong></p>
+			<p style="margin-left: 20px;"><?php esc_html_e( 'Copy the shortcode from the table below, or use these parameters:', 'usgs-water-levels' ); ?></p>
+
+			<table style="margin: 12px 20px; border-collapse: collapse; background: white; padding: 8px;">
+				<thead>
+					<tr style="background: #f6f7f7; border-bottom: 2px solid #ddd;">
+						<th style="padding: 8px 16px; text-align: left; font-family: monospace; color: #2271b1;"><?php esc_html_e( 'Parameter', 'usgs-water-levels' ); ?></th>
+						<th style="padding: 8px 16px; text-align: left;"><?php esc_html_e( 'Description', 'usgs-water-levels' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td style="padding: 8px 16px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee;"><strong>id</strong></td>
+						<td style="padding: 8px 16px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(required) Graph ID from table below', 'usgs-water-levels' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 16px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee;"><strong>chart_type</strong></td>
+						<td style="padding: 8px 16px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(optional) "line", "area", or "bar" - default: "line"', 'usgs-water-levels' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 16px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee;"><strong>width</strong></td>
+						<td style="padding: 8px 16px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(optional) "100%", "600px", "80vw" - default: "100%"', 'usgs-water-levels' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 16px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee;"><strong>line_color</strong></td>
+						<td style="padding: 8px 16px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(optional) Hex color code - default: "#0073aa"', 'usgs-water-levels' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 8px 16px; font-family: monospace; color: #2271b1;"><strong>class</strong></td>
+						<td style="padding: 8px 16px;"><?php esc_html_e( '(optional) Custom CSS classes', 'usgs-water-levels' ); ?></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<p style="margin: 12px 20px 0 20px;"><strong><?php esc_html_e( 'Shortcode Examples:', 'usgs-water-levels' ); ?></strong></p>
+			<div style="margin: 8px 20px;">
+				<code style="display: block; background: white; padding: 12px; margin: 6px 0; border-left: 4px solid #2271b1; font-size: 13px;">[usgs_water_level id="1"]</code>
+				<code style="display: block; background: white; padding: 12px; margin: 6px 0; border-left: 4px solid #2271b1; font-size: 13px;">[usgs_water_level id="1" chart_type="area"]</code>
+				<code style="display: block; background: white; padding: 12px; margin: 6px 0; border-left: 4px solid #2271b1; font-size: 13px;">[usgs_water_level id="1" chart_type="bar" width="600px" line_color="#dc3545"]</code>
 			</div>
 		</div>
 

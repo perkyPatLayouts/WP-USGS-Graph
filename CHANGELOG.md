@@ -2,6 +2,22 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [2.3.1] - 2026-04-09
+
+### Fixed
+- **Cache Clearing**: Comprehensive cache clearing now works with all major WordPress caching plugins
+  - Added support for WP Super Cache, W3 Total Cache, WP Rocket, LiteSpeed Cache
+  - Added support for WP Fastest Cache, Autoptimize, Cache Enabler, Comet Cache
+  - Added support for SiteGround Optimizer, WP-Optimize, Hummingbird
+  - Frontend now updates immediately after editing graphs without manual page re-saves
+
+### Improved
+- **Shortcode Documentation**: Enhanced visibility and formatting on Graphs page
+  - More prominent styling with blue background and border
+  - Clearer table layout with proper headers
+  - Larger, more readable code examples
+  - Better organized sections for easier reading
+
 ## [2.3.0] - 2026-04-09
 
 ### Added

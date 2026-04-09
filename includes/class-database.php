@@ -194,6 +194,79 @@ class USGS_Water_Levels_Database {
 	}
 
 	/**
+	 * Clear all caches (object cache and page caches from popular plugins).
+	 *
+	 * @param int $graph_id Graph ID.
+	 */
+	private static function clear_all_caches( $graph_id ) {
+		// Clear WordPress object cache.
+		wp_cache_delete( 'usgs_graph_' . $graph_id, 'usgs_water_levels' );
+		wp_cache_delete( 'usgs_measurements_' . $graph_id, 'usgs_water_levels' );
+
+		if ( function_exists( 'wp_cache_flush' ) ) {
+			wp_cache_flush();
+		}
+
+		// Clear WP Super Cache.
+		if ( function_exists( 'wp_cache_clear_cache' ) ) {
+			wp_cache_clear_cache();
+		}
+
+		// Clear W3 Total Cache.
+		if ( function_exists( 'w3tc_flush_all' ) ) {
+			w3tc_flush_all();
+		}
+
+		// Clear WP Rocket.
+		if ( function_exists( 'rocket_clean_domain' ) ) {
+			rocket_clean_domain();
+		}
+
+		// Clear LiteSpeed Cache.
+		if ( class_exists( 'LiteSpeed_Cache_API' ) && method_exists( 'LiteSpeed_Cache_API', 'purge_all' ) ) {
+			LiteSpeed_Cache_API::purge_all();
+		}
+
+		// Clear WP Fastest Cache.
+		if ( isset( $GLOBALS['wp_fastest_cache'] ) && method_exists( $GLOBALS['wp_fastest_cache'], 'deleteCache' ) ) {
+			$GLOBALS['wp_fastest_cache']->deleteCache( true );
+		}
+
+		// Clear Autoptimize cache.
+		if ( class_exists( 'autoptimizeCache' ) && method_exists( 'autoptimizeCache', 'clearall' ) ) {
+			autoptimizeCache::clearall();
+		}
+
+		// Clear Cache Enabler.
+		if ( class_exists( 'Cache_Enabler' ) && method_exists( 'Cache_Enabler', 'clear_complete_cache' ) ) {
+			Cache_Enabler::clear_complete_cache();
+		}
+
+		// Clear Comet Cache.
+		if ( class_exists( 'comet_cache' ) && method_exists( 'comet_cache', 'clear' ) ) {
+			comet_cache::clear();
+		}
+
+		// Clear SiteGround Optimizer.
+		if ( function_exists( 'sg_cachepress_purge_cache' ) ) {
+			sg_cachepress_purge_cache();
+		}
+
+		// Clear WP-Optimize.
+		if ( class_exists( 'WP_Optimize' ) ) {
+			$wp_optimize = WP_Optimize();
+			if ( method_exists( $wp_optimize, 'purge_page_cache' ) ) {
+				$wp_optimize->purge_page_cache();
+			}
+		}
+
+		// Clear Hummingbird.
+		if ( class_exists( 'Hummingbird\\Core\\Modules\\Page_Cache' ) ) {
+			do_action( 'wphb_clear_page_cache' );
+		}
+	}
+
+	/**
 	 * Update a graph configuration.
 	 *
 	 * @param int   $graph_id Graph ID.
@@ -261,15 +334,9 @@ class USGS_Water_Levels_Database {
 			array( '%d' )
 		);
 
-		// Clear WordPress caches to ensure frontend updates immediately.
+		// Clear all caches to ensure frontend updates immediately.
 		if ( false !== $result ) {
-			wp_cache_delete( 'usgs_graph_' . $graph_id, 'usgs_water_levels' );
-			wp_cache_delete( 'usgs_measurements_' . $graph_id, 'usgs_water_levels' );
-
-			// Clear all page caches (works with common caching plugins).
-			if ( function_exists( 'wp_cache_flush' ) ) {
-				wp_cache_flush();
-			}
+			self::clear_all_caches( $graph_id );
 		}
 
 		return false !== $result;
@@ -413,15 +480,9 @@ class USGS_Water_Levels_Database {
 
 		set_transient( 'usgs_wl_debug_' . $graph_id, $debug, 300 );
 
-		// Clear caches so frontend updates immediately.
+		// Clear all caches to ensure frontend updates immediately.
 		if ( $inserted_count > 0 ) {
-			wp_cache_delete( 'usgs_graph_' . $graph_id, 'usgs_water_levels' );
-			wp_cache_delete( 'usgs_measurements_' . $graph_id, 'usgs_water_levels' );
-
-			// Clear all page caches.
-			if ( function_exists( 'wp_cache_flush' ) ) {
-				wp_cache_flush();
-			}
+			self::clear_all_caches( $graph_id );
 		}
 
 		return $inserted_count > 0;

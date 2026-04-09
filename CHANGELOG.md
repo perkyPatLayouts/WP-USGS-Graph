@@ -2,6 +2,23 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [2.3.4] - 2026-04-09
+
+### Fixed
+- **Critical: Database Update Debugging**: Added comprehensive error handling and logging
+  - Validate graph exists before attempting update
+  - Return WP_Error with detailed messages instead of silent failures
+  - Add debug logging to track save operations (when WP_DEBUG enabled)
+  - Show detailed error messages in admin notices
+  - Log graph ID, data, and database errors for troubleshooting
+  - Helps diagnose why graph edits are not persisting
+
+### Added
+- Detailed error reporting in admin interface
+- Debug logging for save operations (requires WP_DEBUG)
+- Database error messages shown to user
+- Graph existence validation before updates
+
 ## [2.3.3] - 2026-04-09
 
 ### Fixed

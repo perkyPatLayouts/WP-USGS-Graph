@@ -134,10 +134,16 @@ class USGS_Water_Levels_Settings {
 
 		$notice = isset( $messages[ $message ] ) ? $messages[ $message ] : $messages['error'];
 
+		// Add error detail if present.
+		$error_detail = isset( $_GET['error_detail'] ) ? sanitize_text_field( wp_unslash( $_GET['error_detail'] ) ) : '';
+		if ( $error_detail && 'error' === $notice['type'] ) {
+			$notice['text'] .= ' <strong>' . sprintf( __( 'Details: %s', 'usgs-water-levels' ), $error_detail ) . '</strong>';
+		}
+
 		printf(
 			'<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
 			esc_attr( $notice['type'] ),
-			esc_html( $notice['text'] )
+			wp_kses_post( $notice['text'] )
 		);
 	}
 
@@ -508,22 +514,56 @@ class USGS_Water_Levels_Settings {
 			'custom_css'        => isset( $_POST['custom_css'] ) ? wp_strip_all_tags( wp_unslash( $_POST['custom_css'] ) ) : '',
 		);
 
+		// Debug logging.
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( sprintf( 'USGS: Saving graph. ID: %d, Data: %s', $graph_id, wp_json_encode( $data ) ) );
+		}
+
 		if ( $graph_id ) {
 			// Update existing graph.
 			$result = USGS_Water_Levels_Database::update_graph( $graph_id, $data );
 		} else {
 			// Create new graph.
 			$result = USGS_Water_Levels_Database::create_graph( $data );
+			if ( ! is_wp_error( $result ) ) {
+				$graph_id = $result; // create_graph returns the new ID.
+			}
 		}
 
-		$message = $result ? 'graph_saved' : 'error';
+		// Handle errors or success.
+		if ( is_wp_error( $result ) ) {
+			$message      = 'error';
+			$error_detail = $result->get_error_message();
 
-		wp_safe_redirect(
-			add_query_arg(
-				array( 'message' => $message ),
-				admin_url( 'admin.php?page=usgs-water-levels' )
-			)
-		);
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'USGS: Save failed - %s', $error_detail ) );
+			}
+
+			// Add error detail to redirect.
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'message'      => $message,
+						'error_detail' => rawurlencode( $error_detail ),
+					),
+					admin_url( 'admin.php?page=usgs-water-levels' )
+				)
+			);
+		} else {
+			$message = 'graph_saved';
+
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'message'  => $message,
+						'graph_id' => $graph_id,
+					),
+					admin_url( 'admin.php?page=usgs-water-levels' )
+				)
+			);
+		}
 		exit;
 	}
 

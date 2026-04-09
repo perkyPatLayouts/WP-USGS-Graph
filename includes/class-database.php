@@ -271,12 +271,26 @@ class USGS_Water_Levels_Database {
 	 *
 	 * @param int   $graph_id Graph ID.
 	 * @param array $data     Graph configuration data.
-	 * @return bool True on success, false on failure.
+	 * @return bool|WP_Error True on success, WP_Error on failure.
 	 */
 	public static function update_graph( $graph_id, $data ) {
 		global $wpdb;
 
 		$table = $wpdb->prefix . self::$graphs_table;
+
+		// Validate graph exists.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$exists = $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM $table WHERE id = %d",
+				$graph_id
+			)
+		);
+
+		if ( ! $exists ) {
+			return new WP_Error( 'graph_not_found', sprintf( 'Graph ID %d not found in database', $graph_id ) );
+		}
 
 		$update_data = array();
 		$format      = array();
@@ -322,7 +336,13 @@ class USGS_Water_Levels_Database {
 		}
 
 		if ( empty( $update_data ) ) {
-			return false;
+			return new WP_Error( 'no_data', 'No data to update' );
+		}
+
+		// Log what we're about to update (for debugging).
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( sprintf( 'USGS: Updating graph #%d with data: %s', $graph_id, wp_json_encode( $update_data ) ) );
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -334,12 +354,26 @@ class USGS_Water_Levels_Database {
 			array( '%d' )
 		);
 
-		// Clear all caches to ensure frontend updates immediately.
-		if ( false !== $result ) {
-			self::clear_all_caches( $graph_id );
+		// Check for database errors.
+		if ( false === $result ) {
+			$error_message = $wpdb->last_error ? $wpdb->last_error : 'Unknown database error';
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'USGS: Database update failed for graph #%d: %s', $graph_id, $error_message ) );
+			}
+			return new WP_Error( 'db_error', $error_message );
 		}
 
-		return false !== $result;
+		// Log success.
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( sprintf( 'USGS: Successfully updated graph #%d (%d rows affected)', $graph_id, $result ) );
+		}
+
+		// Clear all caches to ensure frontend updates immediately.
+		self::clear_all_caches( $graph_id );
+
+		return true;
 	}
 
 	/**

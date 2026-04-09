@@ -2,6 +2,35 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [1.0.0] - 2026-04-09
+
+### Initial Release
+
+Complete WordPress plugin for USGS water level monitoring with Gutenberg blocks and shortcodes.
+
+#### Core Features
+- Gutenberg block for displaying water level graphs
+- Shortcode support for Classic Editor: `[usgs_water_level id="1"]`
+- Automatic data scraping from USGS OGC API
+- WP-Cron scheduled updates
+- Multiple chart types: line, area, bar
+- Customizable colors and dimensions
+- Date range filtering with rolling window option
+- Admin interface for graph management
+
+#### Technical Highlights
+- Uses modern USGS OGC API (api.waterdata.usgs.gov)
+- Chart.js for interactive visualizations
+- Automatic database migration system
+- Comprehensive cache clearing for all major caching plugins
+- No build process required - shared hosting compatible
+
+---
+
+## Development History
+
+The following versions were created during development and debugging:
+
 ## [2.3.7] - 2026-04-09
 
 ### Fixed

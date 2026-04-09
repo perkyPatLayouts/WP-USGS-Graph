@@ -4,7 +4,7 @@ Tags: usgs, water, monitoring, charts, graphs, gutenberg, shortcode
 Requires at least: 6.2
 Tested up to: 6.5
 Requires PHP: 8.0
-Stable tag: 2.2.1
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,13 +21,18 @@ USGS Water Levels is a WordPress plugin that automatically scrapes water level m
 * Gutenberg block for modern editor
 * Shortcode support for Classic Editor
 * Date range filtering for historical data
+* Rolling date windows - auto-update date ranges to maintain consistent time periods
 * Configurable scrape intervals (hourly to weekly)
 * Multiple graph configurations
 * Customizable colors and dimensions
 * Responsive charts using Chart.js
+* Unlimited historical data (no artificial limits)
 * Historical data preservation (no auto-pruning)
+* Automatic database migration system
+* Comprehensive cache clearing for all major caching plugins
 * Security hardened with prepared statements
 * Admin interface for managing graphs
+* Instant frontend updates after editing graphs
 
 **Usage:**
 
@@ -84,6 +89,14 @@ The plugin preserves all historical data without automatic pruning. Use date ran
 
 Yes! You can configure optional start/end dates when creating a graph to limit the data scraped from USGS.
 
+= What is the rolling date window feature? =
+
+Enable "Auto-update date range (rolling window)" to automatically keep your graphs current. The end date updates to today, and the start date moves forward by the same amount, maintaining a consistent time window (e.g., always showing the last 2 years of data).
+
+= Do my graph edits update immediately on the frontend? =
+
+Yes! The plugin includes comprehensive cache clearing for all major WordPress caching plugins (WP Super Cache, W3 Total Cache, WP Rocket, LiteSpeed Cache, and more). Changes appear immediately without needing to re-save pages.
+
 == Screenshots ==
 
 1. Admin settings page showing configured graphs
@@ -93,61 +106,21 @@ Yes! You can configure optional start/end dates when creating a graph to limit t
 
 == Changelog ==
 
-= 2.2.1 =
-* Changed: Removed 30 measurement limit - now displays all available data
-* Performance: Better historical data analysis with unlimited measurements
-* Note: Data still limited by API (1000 per request) and optional date ranges
-
-= 2.2.0 =
-* Added: Chart type selection - Line, Area, or Bar charts
-* Added: chart_type parameter to shortcode and block
-* Enhanced: Frontend Chart.js rendering for all three chart types
-* Updated: Admin UI with chart type documentation
-
-= 2.1.3 =
-* Fixed: CRITICAL - Date range HTTP 400 errors
-* Fixed: Changed to OGC API standard datetime parameter format
-* Fixed: Supports datetime=START/END range format
-
-= 2.1.2 =
-* Fixed: Data accuracy - excluded incompatible NGVD29 datum (72019)
-* Fixed: Now only accepts 62610 and 62611 for consistent depth values
-
-= 2.1.1 =
-* Fixed: Expanded parameter code support to include 62611 (NAVD88)
-
-= 2.1.0 =
-* Added: Shortcode support for Classic Editor
-* Added: [usgs_water_level] shortcode with full parameter support
-* Added: Shortcode column in admin for easy copy/paste
-
-= 2.0.2 =
-* Security: Fixed SQL injection vulnerabilities
-* Security: Fixed XSS in custom CSS output
-* Security: Added date validation
-* Changed: Requires WordPress 6.2+ for security features
-
-= 1.1.1 =
-* Fixed: MySQL 8.0.20+ compatibility issue
-* Fixed: Deprecated VALUES() function in ON DUPLICATE KEY UPDATE
-
-= 1.1.0 =
-* CRITICAL: Migrated to USGS OGC API
-* Fixed: Complete rewrite using JSON API
-
 = 1.0.0 =
-* Initial release
+* Initial production release
+* Feature: Three chart types - Line, Area, and Bar charts
+* Feature: Rolling date windows for auto-updating date ranges
+* Feature: Unlimited historical data display
+* Feature: Comprehensive cache clearing for all major caching plugins
+* Feature: Automatic database migration system
+* Feature: Gutenberg block with full customization
+* Feature: Classic Editor shortcode support
+* Security: SQL injection and XSS protection
+* Performance: Instant frontend updates after editing graphs
+* Compatibility: MySQL 8.0.20+ support
+* API: Uses modern USGS OGC API
 
 == Upgrade Notice ==
 
-= 2.2.1 =
-Removes artificial 30 measurement limit. Charts now display complete historical data.
-
-= 2.2.0 =
-Adds chart type selection (Line/Area/Bar). Choose the best visualization for your data.
-
-= 2.1.3 =
-CRITICAL: Fixes date range filtering. Update immediately if using date ranges.
-
-= 2.0.2 =
-SECURITY UPDATE: Fixes SQL injection and XSS vulnerabilities. Update immediately.
+= 1.0.0 =
+Production-ready release with all features working correctly. Includes automatic database migration and comprehensive caching support.

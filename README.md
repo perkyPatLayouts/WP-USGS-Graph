@@ -1,21 +1,39 @@
 # USGS Water Levels - WordPress Plugin
 
+**Version 1.0.0**
+
 A WordPress plugin that scrapes USGS water monitoring data and displays it as interactive graphs using Gutenberg blocks and shortcodes.
 
 **No build process required!** This plugin uses vanilla JavaScript and works on shared hosting without Node.js/npm.
 
 ## Features
 
+### Core Functionality
 - **Automatic Data Scraping**: Periodically scrapes USGS water level measurements via OGC API
 - **Multiple Graphs**: Configure multiple monitoring locations
 - **Gutenberg Block**: Easy-to-use block for displaying graphs
 - **Shortcode Support**: Classic Editor compatible with `[usgs_water_level]` shortcode
-- **Date Range Filtering**: Limit scraped data to specific date ranges
+- **Unlimited Measurements**: Fetches all available historical data (up to 1000 per request)
+
+### Chart Options
+- **Multiple Chart Types**: Line, Area, and Bar charts
 - **Customizable**: Set colors, dimensions, and scrape intervals
-- **Responsive Charts**: Beautiful line charts using Chart.js
+- **Responsive**: Beautiful charts using Chart.js
+
+### Data Management
+- **Date Range Filtering**: Limit scraped data to specific date ranges
+- **Rolling Date Windows**: Auto-update date ranges to maintain consistent time windows
 - **Accurate Data**: Filters for consistent depth measurements (62610/62611 parameter codes)
-- **Database Storage**: Efficient data storage for historical measurements
+- **Database Storage**: Efficient storage for historical measurements
+- **Auto-Migration**: Automatic database schema updates on plugin updates
+
+### Performance & Compatibility
+- **Cache Clearing**: Works with all major WordPress caching plugins
+  - WP Super Cache, W3 Total Cache, WP Rocket, LiteSpeed Cache
+  - WP Fastest Cache, Autoptimize, Cache Enabler, Comet Cache
+  - SiteGround Optimizer, WP-Optimize, Hummingbird
 - **No Build Required**: Works out of the box on shared hosting
+- **Instant Updates**: Frontend displays changes immediately after editing graphs
 
 ## Requirements
 
@@ -64,6 +82,10 @@ A WordPress plugin that scrapes USGS water monitoring data and displays it as in
    - **Date Range** (Optional): Limit data to specific dates
      - Leave blank to scrape all available historical data
      - Format: YYYY-MM-DD
+     - **Auto-update date range (rolling window)**: Check this to automatically move the date window forward
+       - End date automatically updates to today
+       - Start date moves forward by the same amount
+       - Maintains a consistent time window (e.g., always last 2 years)
    - **Custom CSS**: Optional styling
 
 Example USGS URL:
@@ -152,6 +174,7 @@ Stores graph configurations.
 | is_enabled | tinyint | Enable/disable flag |
 | date_start | date | Optional start date for data range |
 | date_end | date | Optional end date for data range |
+| auto_update_dates | tinyint | Enable rolling date window |
 | custom_css | text | Custom CSS for graph |
 | created_at | datetime | Creation timestamp |
 | updated_at | datetime | Last update timestamp |

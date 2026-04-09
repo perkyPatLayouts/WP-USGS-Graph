@@ -1,6 +1,6 @@
 # USGS Water Levels Plugin - User Guide
 
-**Version:** 2.2.1
+**Version:** 1.0.0
 **For:** WordPress Site Administrators and Content Editors
 
 ---
@@ -102,6 +102,21 @@ https://waterdata.usgs.gov/monitoring-location/USGS-410858072171501/
    **Status**
    - Check "Enable scraping" to start automatic data collection
    - Uncheck to pause scraping while keeping the graph configuration
+
+   **Date Range** (Optional)
+   - **Start Date**: Beginning of data range (YYYY-MM-DD format)
+   - **End Date**: End of data range (YYYY-MM-DD format)
+   - Leave both blank to fetch all available historical data
+   - Use date ranges to limit data collection to specific time periods
+
+   **Auto-update date range (rolling window)**
+   - Check this box to automatically keep your date range current
+   - When enabled:
+     - End date automatically updates to today
+     - Start date moves forward by the same amount
+     - Maintains a consistent time window
+   - Example: If you set a 2-year range (2024-01-01 to 2026-01-01), the plugin will automatically move it forward to always show the last 2 years
+   - Perfect for dashboards that need to stay current without manual updates
 
    **Custom CSS** (Advanced - Optional)
    - Add custom styling code if you want unique formatting

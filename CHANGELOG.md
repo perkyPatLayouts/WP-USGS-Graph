@@ -2,6 +2,15 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [2.2.1] - 2026-04-09
+
+### Changed
+- **Removed 30 measurement limit**: Plugin now fetches and displays all available measurements
+  - Previously limited to most recent 30 measurements
+  - Now limited only by API response (up to 1000 measurements per request)
+  - Better for historical data analysis and long-term trends
+  - Date range filtering still available to limit data if needed
+
 ## [2.2.0] - 2026-04-09
 
 ### Added

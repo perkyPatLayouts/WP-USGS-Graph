@@ -210,12 +210,6 @@ class USGS_Water_Levels_Scraper {
 		// Remove duplicates and sort by date.
 		$measurements = self::deduplicate_measurements( $measurements );
 
-		// Limit to most recent 30 measurements.
-		// Measurements are sorted ascending, so we take the last 30.
-		if ( count( $measurements ) > 30 ) {
-			$measurements = array_slice( $measurements, -30 );
-		}
-
 		return $measurements;
 	}
 

@@ -286,7 +286,7 @@ If WP-Cron is disabled on your server, you can:
 - Scraping respects configured intervals to avoid API overload
 - Charts load only when block is present on the page
 - Minimal database queries using indexed columns
-- 30-measurement limit per scrape for optimal performance
+- Supports unlimited measurements (limited only by API response)
 
 ## Customization
 

@@ -301,12 +301,12 @@ class USGS_Water_Levels_Database {
 			$format[]                  = '%d';
 		}
 
-		if ( isset( $data['date_start'] ) ) {
+		if ( array_key_exists( 'date_start', $data ) ) {
 			$update_data['date_start'] = ! empty( $data['date_start'] ) ? sanitize_text_field( $data['date_start'] ) : null;
 			$format[]                  = '%s';
 		}
 
-		if ( isset( $data['date_end'] ) ) {
+		if ( array_key_exists( 'date_end', $data ) ) {
 			$update_data['date_end'] = ! empty( $data['date_end'] ) ? sanitize_text_field( $data['date_end'] ) : null;
 			$format[]                = '%s';
 		}

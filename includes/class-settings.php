@@ -478,22 +478,22 @@ class USGS_Water_Levels_Settings {
 
 		$graph_id = isset( $_POST['graph_id'] ) ? absint( $_POST['graph_id'] ) : 0;
 
-		// Validate and sanitize date fields.
-		$date_start = '';
+		// Process date fields - use strtotime for flexible parsing.
+		$date_start = null;
 		if ( ! empty( $_POST['date_start'] ) ) {
-			$date_start = sanitize_text_field( wp_unslash( $_POST['date_start'] ) );
-			// Validate date format (Y-m-d).
-			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_start ) ) {
-				$date_start = '';
+			$input      = sanitize_text_field( wp_unslash( $_POST['date_start'] ) );
+			$timestamp  = strtotime( $input );
+			if ( false !== $timestamp ) {
+				$date_start = gmdate( 'Y-m-d', $timestamp );
 			}
 		}
 
-		$date_end = '';
+		$date_end = null;
 		if ( ! empty( $_POST['date_end'] ) ) {
-			$date_end = sanitize_text_field( wp_unslash( $_POST['date_end'] ) );
-			// Validate date format (Y-m-d).
-			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_end ) ) {
-				$date_end = '';
+			$input     = sanitize_text_field( wp_unslash( $_POST['date_end'] ) );
+			$timestamp = strtotime( $input );
+			if ( false !== $timestamp ) {
+				$date_end = gmdate( 'Y-m-d', $timestamp );
 			}
 		}
 

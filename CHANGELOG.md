@@ -2,6 +2,15 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [2.3.3] - 2026-04-09
+
+### Fixed
+- **Date Editing Critical Fix**: Completely rewrote date handling to ensure proper saving
+  - Changed from regex validation to strtotime() for flexible date parsing
+  - Use array_key_exists() instead of isset() to properly handle NULL values
+  - Dates now use NULL instead of empty string for better database handling
+  - Fixed issue where start date would not save when changed
+
 ## [2.3.2] - 2026-04-09
 
 ### Fixed

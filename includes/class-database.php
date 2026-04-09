@@ -30,6 +30,31 @@ class USGS_Water_Levels_Database {
 	private static $measurements_table = 'usgs_wl_measurements';
 
 	/**
+	 * Check and upgrade database schema if needed.
+	 */
+	public static function maybe_upgrade_database() {
+		global $wpdb;
+
+		$table = $wpdb->prefix . self::$graphs_table;
+
+		// Check if auto_update_dates column exists.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$column_exists = $wpdb->get_results( "SHOW COLUMNS FROM $table LIKE 'auto_update_dates'" );
+
+		if ( empty( $column_exists ) ) {
+			// Add missing column.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE $table ADD COLUMN auto_update_dates TINYINT(1) NOT NULL DEFAULT 0 AFTER date_end" );
+
+			// Log success.
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'USGS: Added missing auto_update_dates column to database' );
+			}
+		}
+	}
+
+	/**
 	 * Create database tables.
 	 */
 	public static function create_tables() {

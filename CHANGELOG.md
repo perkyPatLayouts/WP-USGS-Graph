@@ -2,6 +2,27 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [2.3.7] - 2026-04-09
+
+### Fixed
+- **CRITICAL: Auto Database Migration**: Plugin now automatically adds missing database columns
+  - Fixes "Unknown column 'auto_update_dates' in 'SET'" error
+  - Checks for missing columns on every plugin load
+  - Automatically adds auto_update_dates column if missing
+  - Prevents database schema mismatches when updating plugin
+  - No manual SQL commands needed
+
+### Added
+- Database schema upgrade system
+- Automatic detection and creation of missing columns
+- Debug logging for database migrations (when WP_DEBUG enabled)
+
+### Technical Details
+- Issue: Updating plugin doesn't trigger activation hook, so database changes weren't applied
+- Solution: Check and upgrade database schema on plugins_loaded hook
+- Method: maybe_upgrade_database() checks for missing columns and adds them
+- Future-proof: Easy to add more schema checks as needed
+
 ## [2.3.6] - 2026-04-09
 
 ### Changed

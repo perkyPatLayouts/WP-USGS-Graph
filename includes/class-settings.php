@@ -152,11 +152,39 @@ class USGS_Water_Levels_Settings {
 			<p><strong><?php esc_html_e( 'How to Display Graphs:', 'usgs-water-levels' ); ?></strong></p>
 			<ul style="margin-left: 20px;">
 				<li><strong><?php esc_html_e( 'Gutenberg Block:', 'usgs-water-levels' ); ?></strong> <?php esc_html_e( 'Insert the "USGS Water Level Graph" block in the block editor.', 'usgs-water-levels' ); ?></li>
-				<li><strong><?php esc_html_e( 'Shortcode (Classic Editor):', 'usgs-water-levels' ); ?></strong> <code>[usgs_water_level id="1" chart_type="line"]</code></li>
+				<li><strong><?php esc_html_e( 'Shortcode (Classic Editor):', 'usgs-water-levels' ); ?></strong> <code>[usgs_water_level id="1"]</code></li>
 			</ul>
-			<p style="margin-left: 20px;">
-				<em><?php esc_html_e( 'Parameters: chart_type (line/area/bar), width, line_color. Replace "1" with your graph ID.', 'usgs-water-levels' ); ?></em>
-			</p>
+
+			<div style="margin-left: 20px; margin-top: 12px;">
+				<p><strong><?php esc_html_e( 'Shortcode Parameters:', 'usgs-water-levels' ); ?></strong></p>
+				<table style="margin: 8px 0; border-collapse: collapse;">
+					<tr>
+						<td style="padding: 4px 12px 4px 0; font-family: monospace; color: #2271b1;"><strong>id</strong></td>
+						<td style="padding: 4px;"><?php esc_html_e( '(required) Graph ID from table below', 'usgs-water-levels' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 4px 12px 4px 0; font-family: monospace; color: #2271b1;"><strong>chart_type</strong></td>
+						<td style="padding: 4px;"><?php esc_html_e( '(optional) "line", "area", or "bar" - default: "line"', 'usgs-water-levels' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 4px 12px 4px 0; font-family: monospace; color: #2271b1;"><strong>width</strong></td>
+						<td style="padding: 4px;"><?php esc_html_e( '(optional) "100%", "600px", "80vw" - default: "100%"', 'usgs-water-levels' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 4px 12px 4px 0; font-family: monospace; color: #2271b1;"><strong>line_color</strong></td>
+						<td style="padding: 4px;"><?php esc_html_e( '(optional) Hex color code - default: "#0073aa"', 'usgs-water-levels' ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 4px 12px 4px 0; font-family: monospace; color: #2271b1;"><strong>class</strong></td>
+						<td style="padding: 4px;"><?php esc_html_e( '(optional) Custom CSS classes', 'usgs-water-levels' ); ?></td>
+					</tr>
+				</table>
+
+				<p style="margin-top: 12px;"><strong><?php esc_html_e( 'Examples:', 'usgs-water-levels' ); ?></strong></p>
+				<code style="display: block; background: #f6f7f7; padding: 8px; margin: 4px 0; border-left: 3px solid #2271b1;">[usgs_water_level id="1"]</code>
+				<code style="display: block; background: #f6f7f7; padding: 8px; margin: 4px 0; border-left: 3px solid #2271b1;">[usgs_water_level id="1" chart_type="area"]</code>
+				<code style="display: block; background: #f6f7f7; padding: 8px; margin: 4px 0; border-left: 3px solid #2271b1;">[usgs_water_level id="1" chart_type="bar" width="600px" line_color="#dc3545"]</code>
+			</div>
 		</div>
 
 		<p>
@@ -342,6 +370,13 @@ class USGS_Water_Levels_Settings {
 						<label for="date_end"><?php esc_html_e( 'End Date:', 'usgs-water-levels' ); ?></label>
 						<input type="date" name="date_end" id="date_end" value="<?php echo esc_attr( $graph_data['date_end'] ?? '' ); ?>">
 						<p class="description"><?php esc_html_e( 'Optional: Limit scraped data to this date range. Leave blank to scrape all available data.', 'usgs-water-levels' ); ?></p>
+						<p style="margin-top: 10px;">
+							<label>
+								<input type="checkbox" name="auto_update_dates" id="auto_update_dates" value="1" <?php checked( ! empty( $graph_data['auto_update_dates'] ) ); ?>>
+								<?php esc_html_e( 'Auto-update date range (rolling window)', 'usgs-water-levels' ); ?>
+							</label>
+						</p>
+						<p class="description"><?php esc_html_e( 'When enabled, the end date will automatically update to today, and the start date will move forward by the same amount, maintaining a consistent time window.', 'usgs-water-levels' ); ?></p>
 					</td>
 				</tr>
 
@@ -416,13 +451,14 @@ class USGS_Water_Levels_Settings {
 		}
 
 		$data = array(
-			'title'           => isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '',
-			'usgs_url'        => isset( $_POST['usgs_url'] ) ? esc_url_raw( wp_unslash( $_POST['usgs_url'] ) ) : '',
-			'scrape_interval' => isset( $_POST['scrape_interval'] ) ? absint( $_POST['scrape_interval'] ) : 24,
-			'is_enabled'      => isset( $_POST['is_enabled'] ) ? 1 : 0,
-			'date_start'      => $date_start,
-			'date_end'        => $date_end,
-			'custom_css'      => isset( $_POST['custom_css'] ) ? wp_strip_all_tags( wp_unslash( $_POST['custom_css'] ) ) : '',
+			'title'             => isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '',
+			'usgs_url'          => isset( $_POST['usgs_url'] ) ? esc_url_raw( wp_unslash( $_POST['usgs_url'] ) ) : '',
+			'scrape_interval'   => isset( $_POST['scrape_interval'] ) ? absint( $_POST['scrape_interval'] ) : 24,
+			'is_enabled'        => isset( $_POST['is_enabled'] ) ? 1 : 0,
+			'date_start'        => $date_start,
+			'date_end'          => $date_end,
+			'auto_update_dates' => isset( $_POST['auto_update_dates'] ) ? 1 : 0,
+			'custom_css'        => isset( $_POST['custom_css'] ) ? wp_strip_all_tags( wp_unslash( $_POST['custom_css'] ) ) : '',
 		);
 
 		if ( $graph_id ) {

@@ -2,6 +2,35 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [2.3.0] - 2026-04-09
+
+### Added
+- **Enhanced Shortcode Documentation**: Detailed parameter table with examples on Graphs page
+  - Shows all available parameters (id, chart_type, width, line_color, class)
+  - Includes usage examples for each parameter
+  - Better formatted with visual examples
+
+- **Rolling Date Window Feature**: Auto-update date range option
+  - New "Auto-update date range (rolling window)" checkbox in graph settings
+  - Automatically moves end date to today
+  - Moves start date forward by the same amount (maintains consistent time window)
+  - Perfect for keeping graphs current without manual updates
+  - New `auto_update_dates` database column
+
+- **Automatic Cache Clearing**: Frontend now updates immediately
+  - Graph changes reflect instantly without re-saving pages
+  - Clears WordPress object cache when graph is updated
+  - Clears cache when new measurements are saved
+  - Works with common caching plugins
+
+### Database
+- Added `auto_update_dates` column to graphs table
+- Cache invalidation on data updates
+
+### Fixed
+- Frontend display now updates immediately after editing graphs
+- No longer need to re-save pages containing shortcodes to see changes
+
 ## [2.2.1] - 2026-04-09
 
 ### Changed

@@ -47,6 +47,7 @@ class USGS_Water_Levels_Database {
 			is_enabled tinyint(1) NOT NULL DEFAULT 1,
 			date_start date DEFAULT NULL,
 			date_end date DEFAULT NULL,
+			auto_update_dates tinyint(1) NOT NULL DEFAULT 0,
 			custom_css text,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -161,13 +162,14 @@ class USGS_Water_Levels_Database {
 		$table = $wpdb->prefix . self::$graphs_table;
 
 		$defaults = array(
-			'title'           => '',
-			'usgs_url'        => '',
-			'scrape_interval' => 24,
-			'is_enabled'      => 1,
-			'date_start'      => null,
-			'date_end'        => null,
-			'custom_css'      => '',
+			'title'             => '',
+			'usgs_url'          => '',
+			'scrape_interval'   => 24,
+			'is_enabled'        => 1,
+			'date_start'        => null,
+			'date_end'          => null,
+			'auto_update_dates' => 0,
+			'custom_css'        => '',
 		);
 
 		$data = wp_parse_args( $data, $defaults );
@@ -176,15 +178,16 @@ class USGS_Water_Levels_Database {
 		$result = $wpdb->insert(
 			$table,
 			array(
-				'title'           => sanitize_text_field( $data['title'] ),
-				'usgs_url'        => esc_url_raw( $data['usgs_url'] ),
-				'scrape_interval' => absint( $data['scrape_interval'] ),
-				'is_enabled'      => absint( $data['is_enabled'] ),
-				'date_start'      => ! empty( $data['date_start'] ) ? sanitize_text_field( $data['date_start'] ) : null,
-				'date_end'        => ! empty( $data['date_end'] ) ? sanitize_text_field( $data['date_end'] ) : null,
-				'custom_css'      => wp_strip_all_tags( $data['custom_css'] ),
+				'title'             => sanitize_text_field( $data['title'] ),
+				'usgs_url'          => esc_url_raw( $data['usgs_url'] ),
+				'scrape_interval'   => absint( $data['scrape_interval'] ),
+				'is_enabled'        => absint( $data['is_enabled'] ),
+				'date_start'        => ! empty( $data['date_start'] ) ? sanitize_text_field( $data['date_start'] ) : null,
+				'date_end'          => ! empty( $data['date_end'] ) ? sanitize_text_field( $data['date_end'] ) : null,
+				'auto_update_dates' => absint( $data['auto_update_dates'] ),
+				'custom_css'        => wp_strip_all_tags( $data['custom_css'] ),
 			),
-			array( '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
+			array( '%s', '%s', '%d', '%d', '%s', '%s', '%d', '%s' )
 		);
 
 		return $result ? $wpdb->insert_id : false;
@@ -235,6 +238,11 @@ class USGS_Water_Levels_Database {
 			$format[]                = '%s';
 		}
 
+		if ( isset( $data['auto_update_dates'] ) ) {
+			$update_data['auto_update_dates'] = absint( $data['auto_update_dates'] );
+			$format[]                         = '%d';
+		}
+
 		if ( isset( $data['custom_css'] ) ) {
 			$update_data['custom_css'] = wp_strip_all_tags( $data['custom_css'] );
 			$format[]                  = '%s';
@@ -252,6 +260,17 @@ class USGS_Water_Levels_Database {
 			$format,
 			array( '%d' )
 		);
+
+		// Clear WordPress caches to ensure frontend updates immediately.
+		if ( false !== $result ) {
+			wp_cache_delete( 'usgs_graph_' . $graph_id, 'usgs_water_levels' );
+			wp_cache_delete( 'usgs_measurements_' . $graph_id, 'usgs_water_levels' );
+
+			// Clear all page caches (works with common caching plugins).
+			if ( function_exists( 'wp_cache_flush' ) ) {
+				wp_cache_flush();
+			}
+		}
 
 		return false !== $result;
 	}
@@ -393,6 +412,17 @@ class USGS_Water_Levels_Database {
 		$debug[] = 'Count after one-by-one insert: ' . $final_count;
 
 		set_transient( 'usgs_wl_debug_' . $graph_id, $debug, 300 );
+
+		// Clear caches so frontend updates immediately.
+		if ( $inserted_count > 0 ) {
+			wp_cache_delete( 'usgs_graph_' . $graph_id, 'usgs_water_levels' );
+			wp_cache_delete( 'usgs_measurements_' . $graph_id, 'usgs_water_levels' );
+
+			// Clear all page caches.
+			if ( function_exists( 'wp_cache_flush' ) ) {
+				wp_cache_flush();
+			}
+		}
 
 		return $inserted_count > 0;
 	}

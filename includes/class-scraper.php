@@ -288,6 +288,35 @@ class USGS_Water_Levels_Scraper {
 			return new WP_Error( 'graph_disabled', __( 'Graph is disabled.', 'usgs-water-levels' ) );
 		}
 
+		// Auto-update dates if enabled (rolling window).
+		if ( ! empty( $graph['auto_update_dates'] ) && ! empty( $graph['date_start'] ) && ! empty( $graph['date_end'] ) ) {
+			$old_end   = strtotime( $graph['date_end'] );
+			$today     = strtotime( 'today' );
+			$days_diff = round( ( $today - $old_end ) / DAY_IN_SECONDS );
+
+			if ( $days_diff > 0 ) {
+				// Update end date to today.
+				$new_end = gmdate( 'Y-m-d', $today );
+
+				// Move start date forward by the same number of days.
+				$old_start = strtotime( $graph['date_start'] );
+				$new_start = gmdate( 'Y-m-d', $old_start + ( $days_diff * DAY_IN_SECONDS ) );
+
+				// Update the database with new dates.
+				USGS_Water_Levels_Database::update_graph(
+					$graph_id,
+					array(
+						'date_start' => $new_start,
+						'date_end'   => $new_end,
+					)
+				);
+
+				// Use updated dates for scraping.
+				$graph['date_start'] = $new_start;
+				$graph['date_end']   = $new_end;
+			}
+		}
+
 		// Scrape USGS data with optional date range.
 		$date_start = ! empty( $graph['date_start'] ) ? $graph['date_start'] : null;
 		$date_end   = ! empty( $graph['date_end'] ) ? $graph['date_end'] : null;

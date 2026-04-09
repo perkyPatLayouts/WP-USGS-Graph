@@ -2,6 +2,22 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [2.3.2] - 2026-04-09
+
+### Fixed
+- **Date Field Persistence**: Added missing default values for date_start, date_end, and auto_update_dates in form defaults
+  - Ensures date changes are properly saved and displayed when editing graphs
+  - Fixes issue where start date would revert to previous value after saving
+
+### Improved
+- **Graphs Page Layout**: Redesigned status messages and documentation display
+  - Scrape success/fail messages now display in prominent custom section at top of page (green for success, red for failure)
+  - Shortcode documentation moved from admin notice to custom styled section with better formatting
+  - Added emoji icons for visual clarity (📊 for documentation, ✓ for success, ✗ for errors)
+  - Dark-themed code examples with better contrast
+  - Improved table styling with alternating row backgrounds
+  - Box shadows and rounded corners for modern appearance
+
 ## [2.3.1] - 2026-04-09
 
 ### Fixed

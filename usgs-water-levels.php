@@ -3,7 +3,7 @@
  * Plugin Name: USGS Water Levels
  * Plugin URI: https://github.com/yourusername/usgs-water-levels
  * Description: Scrapes USGS water monitoring data and displays it as interactive graphs via Gutenberg blocks and shortcodes
- * Version: 2.3.1
+ * Version: 2.3.2
  * Requires at least: 6.2
  * Requires PHP: 8.0
  * Author: Your Name
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'USGS_WATER_LEVELS_VERSION', '2.3.1' );
+define( 'USGS_WATER_LEVELS_VERSION', '2.3.2' );
 define( 'USGS_WATER_LEVELS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'USGS_WATER_LEVELS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'USGS_WATER_LEVELS_PLUGIN_FILE', __FILE__ );

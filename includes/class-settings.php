@@ -147,52 +147,87 @@ class USGS_Water_Levels_Settings {
 	private function render_graphs_list() {
 		$graphs = USGS_Water_Levels_Database::get_all_graphs();
 
+		// Check for scrape status messages in URL.
+		$scrape_message = isset( $_GET['scrape_status'] ) ? sanitize_text_field( wp_unslash( $_GET['scrape_status'] ) ) : '';
+		$graph_id       = isset( $_GET['graph_id'] ) ? absint( $_GET['graph_id'] ) : 0;
+
 		?>
-		<div class="notice notice-info" style="margin: 15px 0; padding: 15px; border-left: 4px solid #72aee6; background: #f0f6fc;">
-			<h3 style="margin-top: 0;"><?php esc_html_e( 'How to Display Graphs', 'usgs-water-levels' ); ?></h3>
 
-			<p><strong><?php esc_html_e( 'Option 1: Gutenberg Block', 'usgs-water-levels' ); ?></strong></p>
-			<p style="margin-left: 20px;"><?php esc_html_e( 'Insert the "USGS Water Level Graph" block in the block editor and select your graph from the dropdown.', 'usgs-water-levels' ); ?></p>
+		<?php if ( $scrape_message && $graph_id ) : ?>
+			<?php
+			$scrape_log = USGS_Water_Levels_Scraper::get_scrape_log( $graph_id );
+			$graph      = USGS_Water_Levels_Database::get_graph_config( $graph_id );
+			?>
+			<div style="margin: 20px 0 30px 0; padding: 15px 20px; border-left: 4px solid <?php echo 'success' === $scrape_message ? '#46b450' : '#dc3232'; ?>; background: <?php echo 'success' === $scrape_message ? '#ecf7ed' : '#fcf0f1'; ?>; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+				<h3 style="margin: 0 0 10px 0; color: <?php echo 'success' === $scrape_message ? '#1e4620' : '#761919'; ?>;">
+					<?php
+					if ( 'success' === $scrape_message ) {
+						echo '✓ ' . esc_html__( 'Scrape Successful', 'usgs-water-levels' );
+					} else {
+						echo '✗ ' . esc_html__( 'Scrape Failed', 'usgs-water-levels' );
+					}
+					?>
+				</h3>
+				<p style="margin: 0;">
+					<strong><?php esc_html_e( 'Graph:', 'usgs-water-levels' ); ?></strong> <?php echo esc_html( $graph['title'] ?? "ID: $graph_id" ); ?>
+				</p>
+				<?php if ( $scrape_log && ! empty( $scrape_log['message'] ) ) : ?>
+					<p style="margin: 8px 0 0 0;">
+						<strong><?php esc_html_e( 'Details:', 'usgs-water-levels' ); ?></strong> <?php echo esc_html( $scrape_log['message'] ); ?>
+					</p>
+				<?php endif; ?>
+			</div>
+		<?php endif; ?>
 
-			<p><strong><?php esc_html_e( 'Option 2: Shortcode (Classic Editor or anywhere shortcodes work)', 'usgs-water-levels' ); ?></strong></p>
-			<p style="margin-left: 20px;"><?php esc_html_e( 'Copy the shortcode from the table below, or use these parameters:', 'usgs-water-levels' ); ?></p>
+		<div style="margin: 20px 0 30px 0; padding: 20px; border-left: 4px solid #72aee6; background: #f0f6fc; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+			<h2 style="margin-top: 0; color: #1d2327;"><?php esc_html_e( '📊 How to Display Graphs', 'usgs-water-levels' ); ?></h2>
 
-			<table style="margin: 12px 20px; border-collapse: collapse; background: white; padding: 8px;">
-				<thead>
-					<tr style="background: #f6f7f7; border-bottom: 2px solid #ddd;">
-						<th style="padding: 8px 16px; text-align: left; font-family: monospace; color: #2271b1;"><?php esc_html_e( 'Parameter', 'usgs-water-levels' ); ?></th>
-						<th style="padding: 8px 16px; text-align: left;"><?php esc_html_e( 'Description', 'usgs-water-levels' ); ?></th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td style="padding: 8px 16px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee;"><strong>id</strong></td>
-						<td style="padding: 8px 16px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(required) Graph ID from table below', 'usgs-water-levels' ); ?></td>
-					</tr>
-					<tr>
-						<td style="padding: 8px 16px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee;"><strong>chart_type</strong></td>
-						<td style="padding: 8px 16px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(optional) "line", "area", or "bar" - default: "line"', 'usgs-water-levels' ); ?></td>
-					</tr>
-					<tr>
-						<td style="padding: 8px 16px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee;"><strong>width</strong></td>
-						<td style="padding: 8px 16px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(optional) "100%", "600px", "80vw" - default: "100%"', 'usgs-water-levels' ); ?></td>
-					</tr>
-					<tr>
-						<td style="padding: 8px 16px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee;"><strong>line_color</strong></td>
-						<td style="padding: 8px 16px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(optional) Hex color code - default: "#0073aa"', 'usgs-water-levels' ); ?></td>
-					</tr>
-					<tr>
-						<td style="padding: 8px 16px; font-family: monospace; color: #2271b1;"><strong>class</strong></td>
-						<td style="padding: 8px 16px;"><?php esc_html_e( '(optional) Custom CSS classes', 'usgs-water-levels' ); ?></td>
-					</tr>
-				</tbody>
-			</table>
+			<div style="background: white; padding: 15px; margin: 15px 0; border-radius: 4px;">
+				<h3 style="margin-top: 0; color: #2271b1;"><?php esc_html_e( 'Option 1: Gutenberg Block', 'usgs-water-levels' ); ?></h3>
+				<p style="margin: 0;"><?php esc_html_e( 'Insert the "USGS Water Level Graph" block in the block editor and select your graph from the dropdown.', 'usgs-water-levels' ); ?></p>
+			</div>
 
-			<p style="margin: 12px 20px 0 20px;"><strong><?php esc_html_e( 'Shortcode Examples:', 'usgs-water-levels' ); ?></strong></p>
-			<div style="margin: 8px 20px;">
-				<code style="display: block; background: white; padding: 12px; margin: 6px 0; border-left: 4px solid #2271b1; font-size: 13px;">[usgs_water_level id="1"]</code>
-				<code style="display: block; background: white; padding: 12px; margin: 6px 0; border-left: 4px solid #2271b1; font-size: 13px;">[usgs_water_level id="1" chart_type="area"]</code>
-				<code style="display: block; background: white; padding: 12px; margin: 6px 0; border-left: 4px solid #2271b1; font-size: 13px;">[usgs_water_level id="1" chart_type="bar" width="600px" line_color="#dc3545"]</code>
+			<div style="background: white; padding: 15px; margin: 15px 0; border-radius: 4px;">
+				<h3 style="margin-top: 0; color: #2271b1;"><?php esc_html_e( 'Option 2: Shortcode', 'usgs-water-levels' ); ?></h3>
+				<p><?php esc_html_e( 'Copy the shortcode from the table below, or build your own using these parameters:', 'usgs-water-levels' ); ?></p>
+
+				<table style="width: 100%; margin: 15px 0; border-collapse: collapse; border: 1px solid #ddd;">
+					<thead>
+						<tr style="background: #f6f7f7;">
+							<th style="padding: 12px; text-align: left; font-family: monospace; color: #2271b1; border-bottom: 2px solid #ddd; width: 150px;"><?php esc_html_e( 'Parameter', 'usgs-water-levels' ); ?></th>
+							<th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;"><?php esc_html_e( 'Description', 'usgs-water-levels' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td style="padding: 10px 12px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>id</strong></td>
+							<td style="padding: 10px 12px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(required) Graph ID from table below', 'usgs-water-levels' ); ?></td>
+						</tr>
+						<tr>
+							<td style="padding: 10px 12px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>chart_type</strong></td>
+							<td style="padding: 10px 12px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(optional) "line", "area", or "bar" - default: "line"', 'usgs-water-levels' ); ?></td>
+						</tr>
+						<tr>
+							<td style="padding: 10px 12px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>width</strong></td>
+							<td style="padding: 10px 12px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(optional) "100%", "600px", "80vw" - default: "100%"', 'usgs-water-levels' ); ?></td>
+						</tr>
+						<tr>
+							<td style="padding: 10px 12px; font-family: monospace; color: #2271b1; border-bottom: 1px solid #eee; background: #f9f9f9;"><strong>line_color</strong></td>
+							<td style="padding: 10px 12px; border-bottom: 1px solid #eee;"><?php esc_html_e( '(optional) Hex color code - default: "#0073aa"', 'usgs-water-levels' ); ?></td>
+						</tr>
+						<tr>
+							<td style="padding: 10px 12px; font-family: monospace; color: #2271b1; background: #f9f9f9;"><strong>class</strong></td>
+							<td style="padding: 10px 12px;"><?php esc_html_e( '(optional) Custom CSS classes', 'usgs-water-levels' ); ?></td>
+						</tr>
+					</tbody>
+				</table>
+
+				<p style="margin: 20px 0 10px 0;"><strong><?php esc_html_e( '📝 Shortcode Examples:', 'usgs-water-levels' ); ?></strong></p>
+				<div style="margin: 0;">
+					<code style="display: block; background: #2c3338; color: #f0f0f1; padding: 15px; margin: 8px 0; border-left: 4px solid #2271b1; font-size: 13px; border-radius: 3px;">[usgs_water_level id="1"]</code>
+					<code style="display: block; background: #2c3338; color: #f0f0f1; padding: 15px; margin: 8px 0; border-left: 4px solid #2271b1; font-size: 13px; border-radius: 3px;">[usgs_water_level id="1" chart_type="area"]</code>
+					<code style="display: block; background: #2c3338; color: #f0f0f1; padding: 15px; margin: 8px 0; border-left: 4px solid #2271b1; font-size: 13px; border-radius: 3px;">[usgs_water_level id="1" chart_type="bar" width="600px" line_color="#dc3545"]</code>
+				</div>
 			</div>
 		</div>
 
@@ -319,12 +354,15 @@ class USGS_Water_Levels_Settings {
 		$graph_data = wp_parse_args(
 			$graph,
 			array(
-				'id'              => 0,
-				'title'           => '',
-				'usgs_url'        => '',
-				'scrape_interval' => 24,
-				'is_enabled'      => 1,
-				'custom_css'      => '',
+				'id'                => 0,
+				'title'             => '',
+				'usgs_url'          => '',
+				'scrape_interval'   => 24,
+				'is_enabled'        => 1,
+				'custom_css'        => '',
+				'date_start'        => '',
+				'date_end'          => '',
+				'auto_update_dates' => 0,
 			)
 		);
 
@@ -525,12 +563,15 @@ class USGS_Water_Levels_Settings {
 
 		check_admin_referer( 'usgs_wl_scrape_now_' . $graph_id );
 
-		$result  = USGS_Water_Levels_Cron::manual_scrape( $graph_id );
-		$message = is_wp_error( $result ) ? 'scrape_error' : 'scrape_success';
+		$result = USGS_Water_Levels_Cron::manual_scrape( $graph_id );
+		$status = is_wp_error( $result ) ? 'error' : 'success';
 
 		wp_safe_redirect(
 			add_query_arg(
-				array( 'message' => $message ),
+				array(
+					'scrape_status' => $status,
+					'graph_id'      => $graph_id,
+				),
 				admin_url( 'admin.php?page=usgs-water-levels' )
 			)
 		);

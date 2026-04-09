@@ -1,6 +1,6 @@
 # USGS Water Levels Plugin - User Guide
 
-**Version:** 1.0.0
+**Version:** 2.2.1
 **For:** WordPress Site Administrators and Content Editors
 
 ---
@@ -11,9 +11,11 @@
 2. [Getting Started](#getting-started)
 3. [Managing Graphs](#managing-graphs)
 4. [Using the Block Editor](#using-the-block-editor)
-5. [Customizing Your Graphs](#customizing-your-graphs)
-6. [Troubleshooting](#troubleshooting)
-7. [Frequently Asked Questions](#frequently-asked-questions)
+5. [Using Shortcodes](#using-shortcodes)
+6. [Chart Types](#chart-types)
+7. [Customizing Your Graphs](#customizing-your-graphs)
+8. [Troubleshooting](#troubleshooting)
+9. [Frequently Asked Questions](#frequently-asked-questions)
 
 ---
 
@@ -26,9 +28,12 @@ USGS Water Levels is a WordPress plugin that automatically collects water level 
 ### What Can You Do With It?
 
 - **Monitor Water Levels**: Track groundwater, reservoir, or stream levels from any USGS monitoring location
-- **Display Data**: Show historical water level data as interactive line graphs
+- **Multiple Chart Types**: Display data as Line, Area, or Bar charts
+- **Gutenberg & Classic Support**: Use modern blocks or traditional shortcodes
+- **Display Data**: Show complete historical water level data
+- **Date Range Filtering**: Limit data to specific time periods
 - **Automatic Updates**: The plugin automatically fetches new data on your schedule
-- **Customize Appearance**: Control colors, sizes, and styling to match your website
+- **Customize Appearance**: Control colors, sizes, chart types, and styling to match your website
 
 ### Who Is This For?
 
@@ -198,6 +203,12 @@ After selecting a graph, customize its appearance using the settings in the righ
 
 #### Graph Settings Panel
 
+**Chart Type**
+- Choose how to visualize your data:
+  - **Line Chart** (default) - Clean line with points, best for showing trends
+  - **Area Chart** - Filled gradient under line, emphasizes magnitude of change
+  - **Bar Chart** - Vertical bars for each measurement, best for discrete data points
+
 **Width**
 - Controls how wide the graph appears
 - Examples:
@@ -249,6 +260,122 @@ In the editor, you'll see a placeholder preview showing:
    - Hover over data points to see exact values
    - Pan and zoom (if enabled)
    - Responsive on mobile devices
+
+---
+
+## Using Shortcodes
+
+### What Are Shortcodes?
+
+Shortcodes are a simple way to insert graphs into your content, especially useful for:
+- Classic Editor users
+- Text widgets
+- Pages created before the block editor
+- Quick insertions without using blocks
+
+### Basic Shortcode
+
+The simplest shortcode to insert a graph:
+
+```
+[usgs_water_level id="1"]
+```
+
+Replace `1` with your graph ID from the admin settings page.
+
+### Shortcode Parameters
+
+Customize your graph with these optional parameters:
+
+**chart_type** - Choose visualization type
+```
+[usgs_water_level id="1" chart_type="line"]
+[usgs_water_level id="1" chart_type="area"]
+[usgs_water_level id="1" chart_type="bar"]
+```
+
+**width** - Set graph width
+```
+[usgs_water_level id="1" width="100%"]
+[usgs_water_level id="1" width="600px"]
+[usgs_water_level id="1" width="80vw"]
+```
+
+**line_color** - Set line/bar color
+```
+[usgs_water_level id="1" line_color="#0073aa"]
+[usgs_water_level id="1" line_color="#ff6600"]
+```
+
+**class** - Add custom CSS classes
+```
+[usgs_water_level id="1" class="my-custom-class"]
+```
+
+### Complete Examples
+
+**Line chart with custom width:**
+```
+[usgs_water_level id="1" chart_type="line" width="800px"]
+```
+
+**Area chart with custom color:**
+```
+[usgs_water_level id="1" chart_type="area" line_color="#28a745" width="100%"]
+```
+
+**Bar chart with all options:**
+```
+[usgs_water_level id="1" chart_type="bar" width="90%" line_color="#dc3545" class="featured-graph"]
+```
+
+### Finding Your Graph ID
+
+1. Go to **USGS Water Levels** in admin menu
+2. Look at the **ID** column in the graphs table
+3. Use that number in your shortcode
+4. The table also shows a ready-to-copy shortcode for each graph!
+
+---
+
+## Chart Types
+
+### Choosing the Right Chart Type
+
+Each chart type serves a different purpose:
+
+**Line Chart** (Default)
+- **Best for:** Showing trends over time
+- **Appearance:** Clean line connecting data points with visible markers
+- **Use when:** You want to emphasize the continuous nature of measurements
+- **Example:** Tracking gradual water level changes
+
+**Area Chart**
+- **Best for:** Emphasizing magnitude and accumulation
+- **Appearance:** Filled gradient area under the line
+- **Use when:** You want to highlight the volume or amount of change
+- **Example:** Showing significant water level fluctuations
+
+**Bar Chart**
+- **Best for:** Discrete measurements and comparisons
+- **Appearance:** Vertical bars for each data point
+- **Use when:** Each measurement is distinct and you want easy comparison
+- **Example:** Monthly or yearly water level summaries
+
+### Switching Between Chart Types
+
+**In Block Editor:**
+1. Select your graph block
+2. Open **Graph Settings** panel in sidebar
+3. Choose from **Chart Type** dropdown
+4. Update/Publish to see changes
+
+**In Shortcode:**
+```
+[usgs_water_level id="1" chart_type="area"]
+```
+
+Change `chart_type` value to "line", "area", or "bar"
 
 ---
 

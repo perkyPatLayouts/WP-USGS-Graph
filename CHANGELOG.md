@@ -2,6 +2,19 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [2.3.5] - 2026-04-09
+
+### Added
+- **Visual Diagnostic System**: Real-time debugging display on graphs page
+  - Shows exact data received from form submission
+  - Displays whether update or create mode
+  - Shows graph ID being edited/created
+  - Displays result type (success/error)
+  - Shows all data sent to database
+  - Yellow diagnostic box appears for 5 minutes after save
+- **Form Diagnostic**: Blue info box on edit form showing graph ID and edit mode status
+- Helps identify if graph_id is missing from form submission (would cause create instead of update)
+
 ## [2.3.4] - 2026-04-09
 
 ### Fixed

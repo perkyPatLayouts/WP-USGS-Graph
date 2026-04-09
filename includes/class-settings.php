@@ -157,7 +157,51 @@ class USGS_Water_Levels_Settings {
 		$scrape_message = isset( $_GET['scrape_status'] ) ? sanitize_text_field( wp_unslash( $_GET['scrape_status'] ) ) : '';
 		$graph_id       = isset( $_GET['graph_id'] ) ? absint( $_GET['graph_id'] ) : 0;
 
+		// Get last save diagnostic.
+		$diagnostic = get_transient( 'usgs_wl_last_save_diagnostic' );
+
 		?>
+
+		<?php if ( $diagnostic ) : ?>
+			<div style="margin: 20px 0; padding: 20px; background: #fff3cd; border-left: 4px solid #ffc107; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+				<h3 style="margin-top: 0; color: #856404;">🔍 Last Save Diagnostic (5 min cache)</h3>
+				<table style="width: 100%; border-collapse: collapse; font-family: monospace; font-size: 12px;">
+					<tr>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><strong>Time:</strong></td>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><?php echo esc_html( $diagnostic['timestamp'] ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><strong>Received Graph ID:</strong></td>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd; color: <?php echo $diagnostic['received_id'] > 0 ? 'green' : 'red'; ?>;"><strong><?php echo absint( $diagnostic['received_id'] ); ?></strong> <?php echo $diagnostic['received_id'] > 0 ? '(UPDATE mode)' : '(CREATE mode - ID missing!)'; ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><strong>Posted Title:</strong></td>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><?php echo esc_html( $diagnostic['posted_title'] ); ?></td>
+					</tr>
+					<tr>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><strong>Data Sent to DB:</strong></td>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><pre style="margin: 0; white-space: pre-wrap;"><?php echo esc_html( wp_json_encode( $diagnostic['data_sent'], JSON_PRETTY_PRINT ) ); ?></pre></td>
+					</tr>
+					<tr>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><strong>Result Type:</strong></td>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd; color: <?php echo 'TRUE' === $diagnostic['result_type'] ? 'green' : 'red'; ?>;"><strong><?php echo esc_html( $diagnostic['result_type'] ); ?></strong></td>
+					</tr>
+					<?php if ( isset( $diagnostic['error_message'] ) ) : ?>
+					<tr>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><strong>Error Message:</strong></td>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd; color: red;"><strong><?php echo esc_html( $diagnostic['error_message'] ); ?></strong></td>
+					</tr>
+					<?php endif; ?>
+					<tr>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><strong>Final Graph ID:</strong></td>
+						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><?php echo absint( $diagnostic['final_graph_id'] ); ?></td>
+					</tr>
+				</table>
+				<p style="margin: 10px 0 0 0; font-size: 12px; color: #856404;">
+					<strong>Next Step:</strong> If "Received Graph ID" is 0, the form is not passing the graph_id correctly. If Result is not TRUE, the update failed.
+				</p>
+			</div>
+		<?php endif; ?>
 
 		<?php if ( $scrape_message && $graph_id ) : ?>
 			<?php
@@ -374,6 +418,16 @@ class USGS_Water_Levels_Settings {
 
 		?>
 		<h2><?php echo esc_html( $title ); ?></h2>
+
+		<?php if ( $is_edit ) : ?>
+			<div style="margin: 15px 0; padding: 15px; background: #d1ecf1; border-left: 4px solid #0c5460; color: #0c5460;">
+				<strong>🔍 Form Diagnostic:</strong>
+				Editing Graph ID: <strong><?php echo absint( $graph_data['id'] ); ?></strong>
+				| Is Edit Mode: <strong><?php echo $is_edit ? 'YES' : 'NO'; ?></strong>
+				| Graph ID will be <?php echo $is_edit ? 'INCLUDED' : 'MISSING'; ?> in form submission
+			</div>
+		<?php endif; ?>
+
 		<p>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=usgs-water-levels' ) ); ?>">
 				&larr; <?php esc_html_e( 'Back to Graphs', 'usgs-water-levels' ); ?>
@@ -514,6 +568,15 @@ class USGS_Water_Levels_Settings {
 			'custom_css'        => isset( $_POST['custom_css'] ) ? wp_strip_all_tags( wp_unslash( $_POST['custom_css'] ) ) : '',
 		);
 
+		// Store diagnostic info in transient (visible to user).
+		$diagnostic = array(
+			'timestamp'    => current_time( 'mysql' ),
+			'received_id'  => $graph_id,
+			'is_update'    => $graph_id > 0,
+			'posted_title' => isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : 'NOT SET',
+			'data_sent'    => $data,
+		);
+
 		// Debug logging.
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -530,6 +593,16 @@ class USGS_Water_Levels_Settings {
 				$graph_id = $result; // create_graph returns the new ID.
 			}
 		}
+
+		// Add result to diagnostic.
+		$diagnostic['result_type'] = is_wp_error( $result ) ? 'WP_Error' : ( $result === true ? 'TRUE' : 'FALSE/OTHER' );
+		if ( is_wp_error( $result ) ) {
+			$diagnostic['error_message'] = $result->get_error_message();
+		}
+		$diagnostic['final_graph_id'] = $graph_id;
+
+		// Store for display on graphs page.
+		set_transient( 'usgs_wl_last_save_diagnostic', $diagnostic, 300 );
 
 		// Handle errors or success.
 		if ( is_wp_error( $result ) ) {

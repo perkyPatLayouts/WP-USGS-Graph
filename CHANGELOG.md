@@ -2,6 +2,15 @@
 
 All notable changes to the USGS Water Levels plugin will be documented in this file.
 
+## [2.3.6] - 2026-04-09
+
+### Changed
+- **Always-Visible Diagnostics**: Diagnostic boxes now always show (not conditional)
+  - Plugin version checker always visible - shows version mismatch warnings
+  - Save diagnostic shows "No save data yet" message when no saves have occurred
+  - Makes it immediately obvious if plugin updated correctly
+  - Easier to verify diagnostic system is working
+
 ## [2.3.5] - 2026-04-09
 
 ### Added

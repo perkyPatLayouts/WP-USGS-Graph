@@ -162,9 +162,20 @@ class USGS_Water_Levels_Settings {
 
 		?>
 
-		<?php if ( $diagnostic ) : ?>
-			<div style="margin: 20px 0; padding: 20px; background: #fff3cd; border-left: 4px solid #ffc107; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-				<h3 style="margin-top: 0; color: #856404;">🔍 Last Save Diagnostic (5 min cache)</h3>
+		<!-- Always visible version check -->
+		<div style="margin: 20px 0; padding: 15px; background: #e7f3ff; border-left: 4px solid #2271b1;">
+			<strong>🔧 Plugin Version:</strong> <?php echo esc_html( USGS_WATER_LEVELS_VERSION ); ?>
+			<?php if ( USGS_WATER_LEVELS_VERSION !== '2.3.5' ) : ?>
+				<span style="color: red; font-weight: bold;"> ⚠️ WARNING: Expected version 2.3.5 - Please update the plugin!</span>
+			<?php else : ?>
+				<span style="color: green;"> ✓ Correct version</span>
+			<?php endif; ?>
+		</div>
+
+		<div style="margin: 20px 0; padding: 20px; background: <?php echo $diagnostic ? '#fff3cd' : '#f8f9fa'; ?>; border-left: 4px solid <?php echo $diagnostic ? '#ffc107' : '#6c757d'; ?>; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+			<h3 style="margin-top: 0; color: <?php echo $diagnostic ? '#856404' : '#6c757d'; ?>;">🔍 Save Diagnostic</h3>
+
+			<?php if ( $diagnostic ) : ?>
 				<table style="width: 100%; border-collapse: collapse; font-family: monospace; font-size: 12px;">
 					<tr>
 						<td style="padding: 8px; background: #fff; border: 1px solid #ddd;"><strong>Time:</strong></td>
@@ -200,8 +211,15 @@ class USGS_Water_Levels_Settings {
 				<p style="margin: 10px 0 0 0; font-size: 12px; color: #856404;">
 					<strong>Next Step:</strong> If "Received Graph ID" is 0, the form is not passing the graph_id correctly. If Result is not TRUE, the update failed.
 				</p>
-			</div>
-		<?php endif; ?>
+			<?php else : ?>
+				<p style="margin: 0; color: #6c757d;">
+					<strong>No save data yet.</strong> Edit a graph and click "Update Graph" to see diagnostic information here.
+				</p>
+				<p style="margin: 10px 0 0 0; font-size: 12px; color: #6c757d;">
+					This diagnostic will show exactly what data is being sent to the database and whether the update succeeds or fails.
+				</p>
+			<?php endif; ?>
+		</div>
 
 		<?php if ( $scrape_message && $graph_id ) : ?>
 			<?php
